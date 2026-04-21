@@ -1,12 +1,12 @@
-lib.versionCheck('overextended/ox_target')
+lib.versionCheck('kitotake/kt_target')
 
-if not lib.checkDependency('ox_lib', '3.30.0', true) then return end
+if not lib.checkDependency('kt_lib', '3.30.0', true) then return end
 
 ---@type table<number, EntityInterface>
 local entityStates = {}
 
 ---@param netId number
-RegisterNetEvent('ox_target:setEntityHasOptions', function(netId)
+RegisterNetEvent('kt_target:setEntityHasOptions', function(netId)
     local entity = Entity(NetworkGetEntityFromNetworkId(netId))
     entity.state.hasTargetOptions = true
     entityStates[netId] = entity
@@ -14,12 +14,12 @@ end)
 
 ---@param netId number
 ---@param door number
-RegisterNetEvent('ox_target:toggleEntityDoor', function(netId, door)
+RegisterNetEvent('kt_target:toggleEntityDoor', function(netId, door)
     local entity = NetworkGetEntityFromNetworkId(netId)
     if not DoesEntityExist(entity) then return end
 
     local owner = NetworkGetEntityOwner(entity)
-    TriggerClientEvent('ox_target:toggleEntityDoor', owner, netId, door)
+    TriggerClientEvent('kt_target:toggleEntityDoor', owner, netId, door)
 end)
 
 CreateThread(function()
@@ -39,7 +39,7 @@ CreateThread(function()
         end
 
         if num > 0 then
-            TriggerClientEvent('ox_target:removeEntity', -1, arr)
+            TriggerClientEvent('kt_target:removeEntity', -1, arr)
             table.wipe(arr)
 
             num = 0

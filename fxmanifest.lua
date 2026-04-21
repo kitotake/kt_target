@@ -5,17 +5,17 @@ lua54 'yes'
 game 'gta5'
 
 -- Resource Information
-name 'ox_target'
-author 'Overextended'
+name 'kt_target'
+author 'kitotake'
 version '1.17.2'
-repository 'https://github.com/overextended/ox_target'
+repository 'https://github.com/kitotake/kt_target'
 description ''
 
 -- Manifest
 ui_page 'web/index.html'
 
 shared_scripts {
-	'@ox_lib/init.lua',
+	'@kt_lib/init.lua',
 }
 
 client_scripts {
@@ -43,4 +43,4 @@ files {
 
 provide 'qtarget'
 
-dependency 'ox_lib'
+dependency 'kt_lib'

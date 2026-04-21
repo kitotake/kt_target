@@ -33,7 +33,7 @@ function utils.getTexture()
 end
 
 -- SetDrawOrigin is limited to 32 calls per frame. Set as 0 to disable.
-local drawZoneSprites = GetConvarInt('ox_target:drawSprite', 24)
+local drawZoneSprites = GetConvarInt('kt_target:drawSprite', 24)
 local SetDrawOrigin = SetDrawOrigin
 local DrawSprite = DrawSprite
 local ClearDrawOrigin = ClearDrawOrigin
@@ -181,20 +181,20 @@ function utils.hasPlayerGotGroup(filter)
 end
 
 SetTimeout(0, function()
-    if utils.hasExport('ox_inventory.Items') then
+    if utils.hasExport('kt_inventory.Items') then
         setmetatable(playerItems, {
             __index = function(self, index)
-                self[index] = exports.ox_inventory:Search('count', index) or 0
+                self[index] = exports.kt_inventory:Search('count', index) or 0
                 return self[index]
             end
         })
 
-        AddEventHandler('ox_inventory:itemCount', function(name, count)
+        AddEventHandler('kt_inventory:itemCount', function(name, count)
             playerItems[name] = count
         end)
     end
 
-    if utils.hasExport('ox_core.GetPlayer') then
+    if utils.hasExport('kt_core.GetPlayer') then
         require 'client.framework.ox'
     elseif utils.hasExport('es_extended.getSharedObject') then
         require 'client.framework.esx'

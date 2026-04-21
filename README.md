@@ -1,24 +1,24 @@
-# ox_target
+# kt_target
 
-![](https://img.shields.io/github/downloads/overextended/ox_target/total?logo=github)
-![](https://img.shields.io/github/downloads/overextended/ox_target/latest/total?logo=github)
-![](https://img.shields.io/github/contributors/overextended/ox_target?logo=github)
-![](https://img.shields.io/github/v/release/overextended/ox_target?logo=github) 
+![](https://img.shields.io/github/downloads/kitotake/kt_target/total?logo=github)
+![](https://img.shields.io/github/downloads/kitotake/kt_target/latest/total?logo=github)
+![](https://img.shields.io/github/contributors/kitotake/kt_target?logo=github)
+![](https://img.shields.io/github/v/release/kitotake/kt_target?logo=github) 
 
 
 A performant and flexible standalone "third-eye" targeting resource, with additional functionality for supported frameworks.
 
-ox_target is the successor to qtarget, which was a mostly-compatible fork of bt-target.
-To improve many design flaws, ox_target has been written from scratch and drops support for bt-target/qtarget standards, though partial compatibility is being implemented where possible.
+kt_target is the successor to qtarget, which was a mostly-compatible fork of bt-target.
+To improve many design flaws, kt_target has been written from scratch and drops support for bt-target/qtarget standards, though partial compatibility is being implemented where possible.
 
 
 ## 📚 Documentation
 
-https://overextended.dev/ox_target
+https://kitotake.dev/kt_target
 
 ## 💾 Download
 
-https://github.com/overextended/ox_target/releases/latest/download/ox_target.zip
+https://github.com/kitotake/kt_target/releases/latest/download/kt_target.zip
 
 ## ✨ Features
 

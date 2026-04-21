@@ -3,7 +3,7 @@ local utils = require 'client.utils'
 local groups = { 'job', 'job2' }
 local playerGroups = {}
 local playerItems = utils.getItems()
-local usingOxInventory = utils.hasExport('ox_inventory.Items')
+local usingOxInventory = utils.hasExport('kt_inventory.Items')
 
 local function setPlayerData(playerData)
     table.wipe(playerGroups)

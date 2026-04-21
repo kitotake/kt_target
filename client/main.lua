@@ -1,4 +1,4 @@
-if not lib.checkDependency('ox_lib', '3.30.0', true) then return end
+if not lib.checkDependency('kt_lib', '3.30.0', true) then return end
 
 lib.locale()
 
@@ -28,10 +28,10 @@ local menuChanged
 local menuHistory = {}
 local nearbyZones
 
--- Toggle ox_target, instead of holding the hotkey
-local toggleHotkey = GetConvarInt('ox_target:toggleHotkey', 0) == 1
-local mouseButton = GetConvarInt('ox_target:leftClick', 1) == 1 and 24 or 25
-local debug = GetConvarInt('ox_target:debug', 0) == 1
+-- Toggle kt_target, instead of holding the hotkey
+local toggleHotkey = GetConvarInt('kt_target:toggleHotkey', 0) == 1
+local mouseButton = GetConvarInt('kt_target:leftClick', 1) == 1 and 24 or 25
+local debug = GetConvarInt('kt_target:debug', 0) == 1
 local vec0 = vec3(0, 0, 0)
 
 ---@param option OxTargetOption
@@ -348,8 +348,8 @@ end
 do
     ---@type KeybindProps
     local keybind = {
-        name = 'ox_target',
-        defaultKey = GetConvar('ox_target:defaultHotkey', 'LMENU'),
+        name = 'kt_target',
+        defaultKey = GetConvar('kt_target:defaultHotkey', 'LMENU'),
         defaultMapper = 'keyboard',
         description = locale('toggle_targeting'),
     }

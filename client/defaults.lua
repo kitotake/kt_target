@@ -1,4 +1,4 @@
-if GetConvarInt('ox_target:defaults', 1) ~= 1 then return end
+if GetConvarInt('kt_target:defaults', 1) ~= 1 then return end
 
 local api = require 'client.api'
 local GetEntityBoneIndexByName = GetEntityBoneIndexByName
@@ -53,17 +53,17 @@ local function onSelectDoor(data, door)
         return toggleDoor(entity, door)
     end
 
-    TriggerServerEvent('ox_target:toggleEntityDoor', VehToNet(entity), door)
+    TriggerServerEvent('kt_target:toggleEntityDoor', VehToNet(entity), door)
 end
 
-RegisterNetEvent('ox_target:toggleEntityDoor', function(netId, door)
+RegisterNetEvent('kt_target:toggleEntityDoor', function(netId, door)
     local entity = NetToVeh(netId)
     toggleDoor(entity, door)
 end)
 
 api.addGlobalVehicle({
     {
-        name = 'ox_target:driverF',
+        name = 'kt_target:driverF',
         icon = 'fa-solid fa-car-side',
         label = locale('toggle_front_driver_door'),
         bones = { 'door_dside_f', 'seat_dside_f' },
@@ -76,7 +76,7 @@ api.addGlobalVehicle({
         end
     },
     {
-        name = 'ox_target:passengerF',
+        name = 'kt_target:passengerF',
         icon = 'fa-solid fa-car-side',
         label = locale('toggle_front_passenger_door'),
         bones = { 'door_pside_f', 'seat_pside_f' },
@@ -89,7 +89,7 @@ api.addGlobalVehicle({
         end
     },
     {
-        name = 'ox_target:driverR',
+        name = 'kt_target:driverR',
         icon = 'fa-solid fa-car-side',
         label = locale('toggle_rear_driver_door'),
         bones = { 'door_dside_r', 'seat_dside_r' },
@@ -102,7 +102,7 @@ api.addGlobalVehicle({
         end
     },
     {
-        name = 'ox_target:passengerR',
+        name = 'kt_target:passengerR',
         icon = 'fa-solid fa-car-side',
         label = locale('toggle_rear_passenger_door'),
         bones = { 'door_pside_r', 'seat_pside_r' },
@@ -115,7 +115,7 @@ api.addGlobalVehicle({
         end
     },
     {
-        name = 'ox_target:bonnet',
+        name = 'kt_target:bonnet',
         icon = 'fa-solid fa-car',
         label = locale('toggle_hood'),
         offset = vec3(0.5, 1, 0.5),
@@ -128,7 +128,7 @@ api.addGlobalVehicle({
         end
     },
     {
-        name = 'ox_target:trunk',
+        name = 'kt_target:trunk',
         icon = 'fa-solid fa-car-rear',
         label = locale('toggle_trunk'),
         offset = vec3(0.5, 0, 0.5),

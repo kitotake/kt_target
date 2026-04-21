@@ -140,7 +140,7 @@ local function addTarget(target, options, resource)
 
     local checkNames = {}
 
-    resource = resource or 'ox_target'
+    resource = resource or 'kt_target'
 
     for i = 1, #options do
         local option = options[i]
@@ -160,7 +160,7 @@ local function addTarget(target, options, resource)
     for i = 1, #options do
         local option = options[i]
 
-        if resource == 'ox_target' then
+        if resource == 'kt_target' then
             if option.canInteract then
                 option.canInteract = msgpack.unpack(msgpack.pack(option.canInteract))
             end
@@ -287,7 +287,7 @@ function api.addEntity(arr, options)
                 entities[netId] = {}
 
                 if not Entity(NetworkGetEntityFromNetworkId(netId)).state.hasTargetOptions then
-                    TriggerServerEvent('ox_target:setEntityHasOptions', netId)
+                    TriggerServerEvent('kt_target:setEntityHasOptions', netId)
                 end
             end
 
@@ -317,7 +317,7 @@ function api.removeEntity(arr, options)
     end
 end
 
-RegisterNetEvent('ox_target:removeEntity', api.removeEntity)
+RegisterNetEvent('kt_target:removeEntity', api.removeEntity)
 
 ---@type table<number, OxTargetOption[]>
 local localEntities = {}
