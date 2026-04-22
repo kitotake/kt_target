@@ -3,7 +3,7 @@ local utils = require 'client.utils'
 local groups = { 'job', 'job2' }
 local playerGroups = {}
 local playerItems = utils.getItems()
-local usingOxInventory = utils.hasExport('kt_inventory.Items')
+local usingktinventory = utils.hasExport('kt_inventory.Items')
 
 local function setPlayerData(playerData)
     table.wipe(playerGroups)
@@ -18,7 +18,7 @@ local function setPlayerData(playerData)
         end
     end
 
-    if usingOxInventory or not playerData.inventory then return end
+    if usingktinventory or not playerData.inventory then return end
 
     for _, v in pairs(playerData.inventory) do
         if v.count > 0 then

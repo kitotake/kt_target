@@ -202,6 +202,8 @@ SetTimeout(0, function()
         require 'client.framework.qbx'
     elseif utils.hasExport('ND_Core.getPlayer') then
         require 'client.framework.nd'
+    elseif utils.hasExport('union.getPlayer') then
+        require 'client.framework.union'
     end
 end)
 

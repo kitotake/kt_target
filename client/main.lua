@@ -34,7 +34,7 @@ local mouseButton = GetConvarInt('kt_target:leftClick', 1) == 1 and 24 or 25
 local debug = GetConvarInt('kt_target:debug', 0) == 1
 local vec0 = vec3(0, 0, 0)
 
----@param option OxTargetOption
+---@param option KtTargetOption
 ---@param distance number
 ---@param endCoords vector3
 ---@param entityHit? number
@@ -407,7 +407,7 @@ RegisterNUICallback('select', function(data, cb)
 
     local zone = data[3] and nearbyZones[data[3]]
 
-    ---@type OxTargetOption?
+    ---@type KtTargetOption?
     local option = zone and zone.options[data[2]] or options[data[1]][data[2]]
 
     if option then

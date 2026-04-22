@@ -1,4 +1,4 @@
----@class OxTargetOption
+---@class KtTargetOption
 ---@field resource? string
 
 local utils = require 'client.utils'
@@ -19,8 +19,8 @@ local function typeError(variable, expected, received)
 end
 
 ---Checks options and throws an error on type mismatch
----@param options OxTargetOption | OxTargetOption[]
----@return OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
+---@return KtTargetOption[]
 local function checkOptions(options)
     local optionsType = type(options)
 
@@ -39,7 +39,7 @@ local function checkOptions(options)
     return options
 end
 
----@param data OxTargetPolyZone | table
+---@param data KtTargetPolyZone | table
 ---@return number
 function api.addPolyZone(data)
     if data.debug then utils.warn('Creating new PolyZone with debug enabled.') end
@@ -49,7 +49,7 @@ function api.addPolyZone(data)
     return lib.zones.poly(data).id
 end
 
----@param data OxTargetBoxZone | table
+---@param data KtTargetBoxZone | table
 ---@return number
 function api.addBoxZone(data)
     if data.debug then utils.warn('Creating new BoxZone with debug enabled.') end
@@ -59,7 +59,7 @@ function api.addBoxZone(data)
     return lib.zones.box(data).id
 end
 
----@param data OxTargetSphereZone | table
+---@param data KtTargetSphereZone | table
 ---@return number
 function api.addSphereZone(data)
     if data.debug then utils.warn('Creating new SphereZone with debug enabled.') end
@@ -133,7 +133,7 @@ local function removeTarget(target, remove, resource, showWarning)
 end
 
 ---@param target table
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 ---@param resource string
 local function addTarget(target, options, resource)
     options = checkOptions(options)
@@ -175,10 +175,10 @@ local function addTarget(target, options, resource)
     end
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local peds = {}
 
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addGlobalPed(options)
     addTarget(peds, options, GetInvokingResource())
 end
@@ -188,10 +188,10 @@ function api.removeGlobalPed(options)
     removeTarget(peds, options, GetInvokingResource())
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local vehicles = {}
 
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addGlobalVehicle(options)
     addTarget(vehicles, options, GetInvokingResource())
 end
@@ -201,10 +201,10 @@ function api.removeGlobalVehicle(options)
     removeTarget(vehicles, options, GetInvokingResource())
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local objects = {}
 
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addGlobalObject(options)
     addTarget(objects, options, GetInvokingResource())
 end
@@ -214,10 +214,10 @@ function api.removeGlobalObject(options)
     removeTarget(objects, options, GetInvokingResource())
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local players = {}
 
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addGlobalPlayer(options)
     addTarget(players, options, GetInvokingResource())
 end
@@ -227,11 +227,11 @@ function api.removeGlobalPlayer(options)
     removeTarget(players, options, GetInvokingResource())
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local models = {}
 
 ---@param arr (number | string) | (number | string)[]
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addModel(arr, options)
     if type(arr) ~= 'table' then arr = { arr } end
     local resource = GetInvokingResource()
@@ -270,11 +270,11 @@ function api.removeModel(arr, options)
     end
 end
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local entities = {}
 
 ---@param arr number | number[]
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addEntity(arr, options)
     if type(arr) ~= 'table' then arr = { arr } end
     local resource = GetInvokingResource()
@@ -319,11 +319,11 @@ end
 
 RegisterNetEvent('kt_target:removeEntity', api.removeEntity)
 
----@type table<number, OxTargetOption[]>
+---@type table<number, KtTargetOption[]>
 local localEntities = {}
 
 ---@param arr number | number[]
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addLocalEntity(arr, options)
     if type(arr) ~= 'table' then arr = { arr } end
     local resource = GetInvokingResource()
@@ -427,7 +427,7 @@ end)
 local NetworkGetEntityIsNetworked = NetworkGetEntityIsNetworked
 local NetworkGetNetworkIdFromEntity = NetworkGetNetworkIdFromEntity
 
----@class OxTargetOptions
+---@class KtTargetOptions
 local options_mt = {}
 options_mt.__index = options_mt
 options_mt.size = 1
@@ -471,10 +471,10 @@ function options_mt:set(entity, _type, model)
     if self.localEntity then options_mt.size += 1 end
 end
 
----@type OxTargetOption[]
+---@type KtTargetOption[]
 local global = {}
 
----@param options OxTargetOption | OxTargetOption[]
+---@param options KtTargetOption | KtTargetOption[]
 function api.addGlobalOption(options)
     addTarget(global, options, GetInvokingResource())
 end
@@ -484,7 +484,7 @@ function api.removeGlobalOption(options)
     removeTarget(global, options, GetInvokingResource())
 end
 
----@class OxTargetOptions
+---@class KtTargetOptions
 local options = setmetatable({
     __global = global
 }, options_mt)
