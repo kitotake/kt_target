@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Option } from "./Option";
+import { Option } from "./components/Option";
+
+type OptionMeta = {
+  key: string;
+  type: string;
+  id: number;
+  zoneId?: number;
+  data: {
+    label: string;
+    icon: string;
+    iconColor?: string;
+    hide?: boolean;
+    cooldown?: number;
+  };
+};
 
 type NuiData = {
   event: string;
@@ -12,44 +26,58 @@ type NuiData = {
 export const App: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [eyeHover, setEyeHover] = useState(false);
-  const [options, setOptions] = useState<JSX.Element[]>([]);
+  const [optionsMeta, setOptionsMeta] = useState<OptionMeta[]>([]);
   const [noOptions, setNoOptions] = useState<string | null>(null);
+
+  // Sync eye-hover sur le SVG statique dans le HTML
+  useEffect(() => {
+    const svg = document.getElementById("eyeSvg");
+    if (!svg) return;
+    svg.classList.toggle("eye-hover", eyeHover);
+  }, [eyeHover]);
+
+  // Sync visibility sur le body (l'œil et les options sont hors React)
+  useEffect(() => {
+    document.body.style.visibility = visible ? "visible" : "hidden";
+  }, [visible]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<NuiData>) => {
       const data = event.data;
 
-      setOptions([]);
-      setNoOptions(null);
-
       switch (data.event) {
         case "visible":
           setVisible(!!data.state);
-          setEyeHover(false);
+          if (!data.state) {
+            setEyeHover(false);
+            setOptionsMeta([]);
+            setNoOptions(null);
+          }
           break;
 
         case "leftTarget":
           setEyeHover(false);
+          setOptionsMeta([]);
+          setNoOptions(null);
           break;
 
-        case "setTarget":
+        case "setTarget": {
           setEyeHover(true);
+          setNoOptions(null);
 
           let totalVisible = 0;
-          const newOptions: JSX.Element[] = [];
+          const newMeta: OptionMeta[] = [];
 
           if (data.options) {
             Object.entries(data.options).forEach(([type, list]) => {
               list.forEach((opt, index) => {
                 if (!opt.hide) totalVisible++;
-                newOptions.push(
-                  <Option
-                    key={`${type}-${index}`}
-                    type={type}
-                    id={index + 1}
-                    data={opt}
-                  />
-                );
+                newMeta.push({
+                  key: `${type}-${index + 1}`,
+                  type,
+                  id: index + 1,
+                  data: opt,
+                });
               });
             });
           }
@@ -58,26 +86,24 @@ export const App: React.FC = () => {
             data.zones.forEach((zone, zoneIndex) => {
               zone.forEach((opt, index) => {
                 if (!opt.hide) totalVisible++;
-                newOptions.push(
-                  <Option
-                    key={`zone-${zoneIndex}-${index}`}
-                    type="zones"
-                    id={index + 1}
-                    zoneId={zoneIndex + 1}
-                    data={opt}
-                  />
-                );
+                newMeta.push({
+                  key: `zone-${zoneIndex + 1}-${index + 1}`,
+                  type: "zones",
+                  id: index + 1,
+                  zoneId: zoneIndex + 1,
+                  data: opt,
+                });
               });
             });
           }
 
-          setOptions(newOptions);
+          setOptionsMeta(newMeta);
 
           if (totalVisible === 0) {
             setNoOptions(data.noOptionsLabel || "No interactions available");
           }
-
           break;
+        }
       }
     };
 
@@ -85,14 +111,21 @@ export const App: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  // React gère uniquement les options — l'œil est dans le HTML statique
   return (
-    <div style={{ visibility: visible ? "visible" : "hidden" }}>
-      <div id="eyeSvg" className={eyeHover ? "eye-hover" : ""} />
-
-      <div id="options-wrapper">
-        {options}
-        {noOptions && <p id="no-options">{noOptions}</p>}
-      </div>
-    </div>
+    <>
+      {optionsMeta.map((meta) => (
+        <Option
+          key={meta.key}
+          type={meta.type}
+          id={meta.id}
+          zoneId={meta.zoneId}
+          data={meta.data}
+        />
+      ))}
+      {noOptions && <p id="no-options">{noOptions}</p>}
+    </>
   );
 };
+
+export default App;

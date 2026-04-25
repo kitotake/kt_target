@@ -1,0 +1,256 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap");
+
+// ─── Variables ───────────────────────────────────────────────────────────────
+
+:root {
+  --color-default: #cfd2da;
+  --color-hover: #ffffff;
+  --color-accent: #a78bfa;
+  --color-icon-default: #8b8fa8;
+
+  --bg-option: rgba(12, 12, 16, 0.72);
+  --bg-option-hover: rgba(22, 22, 30, 0.82);
+  --bg-fade-stop: rgba(12, 12, 16, 0);
+
+  --font-main: "Nunito", sans-serif;
+
+  --transition-speed: 220ms;
+  --option-height: 28pt;
+  --option-width: 160pt;
+}
+
+// ─── Reset ───────────────────────────────────────────────────────────────────
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  user-select: none;
+  white-space: nowrap;
+  visibility: hidden; // NUI hidden by default; shown via JS
+  background: transparent;
+}
+
+p {
+  margin: 0;
+}
+
+// ─── Eye / Crosshair ─────────────────────────────────────────────────────────
+
+#eyeSvg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 22pt;
+  height: 22pt;
+
+  // SVG background injected via Lua/NUI; color driven by fill currentColor
+  fill: transparent;
+  color: var(--color-icon-default);
+  transition: color var(--transition-speed) ease,
+              filter var(--transition-speed) ease;
+
+  &.eye-hover {
+    color: var(--color-accent);
+    filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.55));
+  }
+}
+
+// ─── Options wrapper ─────────────────────────────────────────────────────────
+
+#options-wrapper {
+  position: absolute;
+  top: 48.4%;
+  left: calc(50% + 20pt);
+
+  display: flex;
+  flex-direction: column;
+  gap: 2pt;
+}
+
+// ─── No-options label ────────────────────────────────────────────────────────
+
+#no-options {
+  color: var(--color-default);
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.55;
+  padding: 4pt 8pt;
+
+  background: linear-gradient(
+    90deg,
+    var(--bg-option) 0%,
+    rgba(12, 12, 16, 0.35) 60%,
+    var(--bg-fade-stop) 100%
+  );
+
+  border-left: 2px solid rgba(167, 139, 250, 0.25);
+  border-radius: 1pt;
+}
+
+// ─── Option item ─────────────────────────────────────────────────────────────
+
+.option-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+
+  width: var(--option-width);
+  height: var(--option-height);
+
+  font-family: var(--font-main);
+  font-size: 10.5pt;
+  font-weight: 500;
+  color: var(--color-default);
+
+  background: linear-gradient(
+    90deg,
+    var(--bg-option) 0%,
+    rgba(12, 12, 16, 0.5) 65%,
+    var(--bg-fade-stop) 100%
+  );
+
+  border-left: 2px solid transparent;
+  border-radius: 1pt;
+
+  position: relative; // requis pour la cooldown-bar en absolute
+  cursor: pointer;
+  transition:
+    color var(--transition-speed) ease,
+    background var(--transition-speed) ease,
+    border-color var(--transition-speed) ease,
+    padding-left var(--transition-speed) ease,
+    filter var(--transition-speed) ease;
+
+  // ── Hover state ─────────────────────────────────────────────────────────
+  &:hover {
+    color: var(--color-hover);
+    padding-left: 3pt;
+
+    background: linear-gradient(
+      90deg,
+      var(--bg-option-hover) 0%,
+      rgba(22, 22, 30, 0.45) 65%,
+      var(--bg-fade-stop) 100%
+    );
+
+    border-left-color: var(--color-accent);
+
+    .option-icon {
+      color: var(--color-accent);
+      filter: drop-shadow(0 0 3px rgba(167, 139, 250, 0.6));
+    }
+  }
+
+  // ── Active / click flash ────────────────────────────────────────────────
+  &:active {
+    filter: brightness(1.25);
+  }
+}
+
+// ─── Icon ────────────────────────────────────────────────────────────────────
+
+.option-icon {
+  flex-shrink: 0;
+  width: 20pt;
+  text-align: center;
+
+  font-size: 11pt;
+  line-height: var(--option-height);
+
+  margin: 0 6pt;
+
+  color: var(--color-icon-default);
+  transition:
+    color var(--transition-speed) ease,
+    filter var(--transition-speed) ease;
+}
+
+// ─── Label ───────────────────────────────────────────────────────────────────
+
+.option-label {
+  line-height: var(--option-height);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ─── Cooldown bar ────────────────────────────────────────────────────────────
+
+.option-cooling {
+  cursor: not-allowed;
+  opacity: 0.8;
+
+  &:hover {
+    // Pas de décalage ni accent quand en cooldown
+    padding-left: 0;
+    border-left-color: rgba(167, 139, 250, 0.15);
+    color: var(--color-default);
+
+    .option-icon {
+      color: var(--color-icon-default);
+      filter: none;
+    }
+  }
+}
+
+.option-cooldown-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: var(--option-width);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 0 0 1pt 0;
+  overflow: hidden;
+}
+
+.option-cooldown-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    rgba(167, 139, 250, 0.4) 100%
+  );
+  transform-origin: left center;
+  // La transform scaleX est animée via JS (requestAnimationFrame)
+  // On désactive la transition CSS pour ne pas lutter contre le RAF
+  transition: none;
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.5);
+}
+
+// ─── Animations ──────────────────────────────────────────────────────────────
+
+// Slide-in when options appear (applied via JS class or React key remounting)
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6pt);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.option-container {
+  animation: slideIn 180ms ease both;
+
+  // Stagger each child via nth-child (up to 12 options)
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{($i - 1) * 35}ms;
+    }
+  }
+}
