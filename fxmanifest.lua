@@ -1,5 +1,5 @@
 fx_version 'cerulean'
-use_experimental_fxv2_oal 'yes'
+
 lua54 'yes'
 game 'gta5'
 
@@ -17,17 +17,16 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
-	'client/framework/union.lua',
-	'client/admin/object_target.lua',
+    'client/admin/object_target.lua',   -- ← AJOUT
 }
 
 server_scripts {
     'server/main.lua'
-	--'server/framework/union.lua',
 }
 
 files {
-    'web/**',
+    'web/build/index.html',
+    'web/build/**/*',
     'locales/*.json',
     'client/api.lua',
     'client/utils.lua',
@@ -38,8 +37,9 @@ files {
     'client/framework/ox.lua',
     'client/framework/esx.lua',
     'client/framework/qbx.lua',
-    'client/framework/union.lua',   -- ← AJOUT : manquait ici
+    'client/framework/union.lua',
     'client/compat/qtarget.lua',
+    'client/admin/object_target.lua',   -- ← AJOUT
 }
 
 provide 'qtarget'

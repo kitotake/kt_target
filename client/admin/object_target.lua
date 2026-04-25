@@ -1,8 +1,6 @@
 -- client/admin/object_target.lua
 -- Système d'interaction admin sur les objets au sol via kt_target + Union
 
-print('[kt_target] Chargement du module admin/object_target.lua')
-
 local kt_target = exports.kt_target
 local isMovingObject = false
 local frozenObjects = {}
