@@ -41,6 +41,25 @@ p {
   left: calc(50% + 18pt);
 }
 
+#no-options {
+  position: absolute;
+  top: calc(48.4%);
+  left: calc(50% + 18pt);
+  color: var(--color-default);
+  font-family: "Nunito";
+  font-size: 10pt;
+  font-weight: 400;
+  opacity: 0.6;
+  font-style: italic;
+  padding: 4pt 6pt;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 20, 20, 0.5) 0%,
+    rgba(20, 20, 20, 0.3) 66%,
+    rgba(47, 48, 53, 0) 100%
+  );
+}
+
 .option-container {
   color: var(--color-default);
   display: flex;

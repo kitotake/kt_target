@@ -1,10 +1,10 @@
 -- client/framework/union.lua
 -- Intégration Union Framework dans kt_target
 
+
 local utils = require 'client.utils'
 
 -- Cache local du personnage actif
--- Mis à jour via events Union pour éviter un export à chaque frame
 local playerJob   = 'unemployed'
 local playerGrade = 0
 local playerGroup = 'user'  -- admin, moderator, founder, user
@@ -33,7 +33,6 @@ local function refreshPlayerGroup()
     playerGroup = player.group or 'user'
 end
 
--- Tentative initiale (peut être nil si le personnage n'est pas encore chargé)
 SetTimeout(500, function()
     refreshFromCharacter()
     refreshPlayerGroup()
@@ -56,7 +55,6 @@ RegisterNetEvent('union:character:deselected', function()
     playerGroup = 'user'
 end)
 
--- Rechargement au spawn du personnage
 RegisterNetEvent('union:player:spawned', function()
     refreshFromCharacter()
     refreshPlayerGroup()
@@ -69,6 +67,11 @@ end)
 --   string           → "police"
 --   array            → { "police", "ambulance" }
 --   hash (grade min) → { police = 0, ambulance = 2 }
+--
+-- Note : le bypass admin/founder a été supprimé — il contournait
+-- tous les filtres de job, ce qui causait des incohérences de gameplay.
+-- Si tu veux le réactiver pour certaines options spécifiques, utilise
+-- canInteract dans la définition de l'option.
 -- ─────────────────────────────────────────────────────────────
 
 ---@diagnostic disable-next-line: duplicate-set-field
@@ -76,12 +79,6 @@ function utils.hasPlayerGotGroup(filter)
     if not filter then return true end
 
     local _type = type(filter)
-
-    -- Bypass total pour les admins/founders sur certaines options
-    -- (optionnel : commenter si non souhaité)
-    if playerGroup == 'founder' or playerGroup == 'admin' then
-        return true
-    end
 
     if _type == 'string' then
         return playerJob == filter
@@ -109,3 +106,6 @@ function utils.hasPlayerGotGroup(filter)
 
     return false
 end
+
+
+print('[kt_target] Chargement du module framework/union.lua')

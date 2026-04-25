@@ -424,6 +424,22 @@ AddEventHandler('onClientResourceStop', function(resource)
     end
 end)
 
+---Supprime toutes les options enregistrées par la resource appelante.
+---Utile pour un reset complet sans devoir lister les noms un par un.
+function api.clearAll()
+    local resource = GetInvokingResource()
+    removeResourceGlobals(resource, { peds, vehicles, objects, players })
+    removeResourceTargets(resource, { models, entities, localEntities })
+
+    if Zones then
+        for _, v in pairs(Zones) do
+            if v.resource == resource then
+                v:remove()
+            end
+        end
+    end
+end
+
 local NetworkGetEntityIsNetworked = NetworkGetEntityIsNetworked
 local NetworkGetNetworkIdFromEntity = NetworkGetNetworkIdFromEntity
 

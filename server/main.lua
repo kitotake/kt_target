@@ -23,26 +23,24 @@ RegisterNetEvent('kt_target:toggleEntityDoor', function(netId, door)
 end)
 
 CreateThread(function()
-    local arr = {}
-    local num = 0
-
     while true do
         Wait(10000)
+
+        local arr = {}
+        local num = 0
 
         for netId, entity in pairs(entityStates) do
             if not DoesEntityExist(entity.__data) or not entity.state.hasTargetOptions then
                 entityStates[netId] = nil
                 num += 1
-
                 arr[num] = netId
             end
         end
 
         if num > 0 then
             TriggerClientEvent('kt_target:removeEntity', -1, arr)
-            table.wipe(arr)
-
-            num = 0
         end
     end
 end)
+
+print('[kt_target] Chargement du module server/main.lua terminé')

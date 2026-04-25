@@ -11,6 +11,8 @@
   "debug_ped": "(Debug) Ped",
   "debug_vehicle": "(Debug) Véhicule",
   "debug_object": "(Debug) Objet",
+  "debug_global": "(Debug) Global",
   "toggle_targeting": "Afficher le système d'interaction",
-  "go_back": "Retour"
+  "go_back": "Retour",
+  "no_options": "Aucune interaction disponible"
 }

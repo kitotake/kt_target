@@ -17,10 +17,13 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
+	'client/framework/union.lua',
+	'client/admin/object_target.lua',
 }
 
 server_scripts {
     'server/main.lua'
+	--'server/framework/union.lua',
 }
 
 files {
