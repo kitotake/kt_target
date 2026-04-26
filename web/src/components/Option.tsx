@@ -3,11 +3,11 @@ import { fetchNui } from "../utils";
 import { useCooldown } from "../hooks";
 import { CLICK_LOCKOUT_MS } from "../config";
 import { CooldownBar } from "./CooldownBar";
-import type { OptionMeta } from "../typings";
+import type { OptionMeta, SelectPayload } from "../typings";
 
-type OptionProps = Pick<OptionMeta, "type" | "id" | "zoneId" | "data">;
+type OptionProps = Pick<OptionMeta, "groupIndex" | "optionIndex" | "zoneId" | "data">;
 
-export const Option: React.FC<OptionProps> = ({ type, id, zoneId, data }) => {
+export const Option: React.FC<OptionProps> = ({ groupIndex, optionIndex, zoneId, data }) => {
   const { isCooling, progress, startCooldown } = useCooldown();
   const elRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +19,15 @@ export const Option: React.FC<OptionProps> = ({ type, id, zoneId, data }) => {
     const el = elRef.current;
     if (el) el.style.pointerEvents = "none";
 
-    await fetchNui("select", [type, id, zoneId]);
+    // ✅ Correction : on envoie [groupIndex, optionIndex, zoneId?]
+    // Ces valeurs sont 1-based et correspondent exactement aux indices Lua.
+    // - option d'entité : [groupIndex, optionIndex, undefined]
+    // - option de zone  : [undefined,  optionIndex, zoneId]
+    const payload: SelectPayload = zoneId !== undefined
+      ? [undefined, optionIndex, zoneId]
+      : [groupIndex!, optionIndex, undefined];
+
+    await fetchNui("select", payload);
 
     if (data.cooldown && data.cooldown > 0) {
       startCooldown(data.cooldown, () => {

@@ -28,7 +28,6 @@ local menuChanged
 local menuHistory = {}
 local nearbyZones
 
--- Toggle kt_target, instead of holding the hotkey
 local toggleHotkey = GetConvarInt('kt_target:toggleHotkey', 0) == 1
 local mouseButton = GetConvarInt('kt_target:leftClick', 1) == 1 and 24 or 25
 local debug = GetConvarInt('kt_target:debug', 0) == 1
@@ -121,6 +120,82 @@ local function shouldHide(option, distance, endCoords, entityHit, entityType, en
         local success, resp = pcall(option.canInteract, entityHit, distance, endCoords, option.name, bone)
         return not success or not resp
     end
+end
+
+-- ─────────────────────────────────────────────────────────────
+-- ✅ Correction clé : on construit un payload NUI structuré avec
+-- des indices numériques stables que React peut renvoyer tels quels.
+--
+-- Format envoyé au React :
+-- {
+--   event = "setTarget",
+--   groups = {              ← tableau indexé numériquement
+--     { key = "__global", options = [...] },
+--     { key = "globalTarget", options = [...] },
+--     ...
+--   },
+--   zones = {
+--     { zoneId = 1, options = [...] },
+--     ...
+--   }
+-- }
+--
+-- React renvoie via fetchNui("select", { groupIndex, optionIndex, zoneId? })
+-- Lua retrouve : groups[groupIndex].options[optionIndex]
+-- ─────────────────────────────────────────────────────────────
+
+---@param opt KtTargetOption
+---@return table
+local function serializeOption(opt)
+    return {
+        label      = opt.label,
+        icon       = opt.icon,
+        iconColor  = opt.iconColor,
+        hide       = opt.hide,
+        cooldown   = opt.cooldown,
+        name       = opt.name,
+        menuName   = opt.menuName,
+        openMenu   = opt.openMenu,
+    }
+end
+
+-- Construit la liste des groupes à envoyer au React
+-- Retourne aussi la référence Lua (optionsGroups) pour le callback select.
+local optionsGroups = {} -- { { key, list } } — référence Lua, réinitialisée à chaque setTarget
+
+local function buildNuiPayload(zones)
+    table.wipe(optionsGroups)
+
+    -- On itère dans le même ordre que l'objet options_mt
+    local groupKeys = { '__global', 'globalTarget', 'model', 'entity', 'localEntity' }
+    local nuiGroups = {}
+
+    for _, key in ipairs(groupKeys) do
+        local list = options[key]
+        if list and #list > 0 then
+            local serialized = {}
+            for i = 1, #list do
+                serialized[i] = serializeOption(list[i])
+            end
+            -- Stocke la référence Lua pour le callback
+            optionsGroups[#optionsGroups + 1] = { key = key, list = list }
+            -- Données NUI
+            nuiGroups[#nuiGroups + 1] = { key = key, options = serialized }
+        end
+    end
+
+    -- Zones
+    local nuiZones = {}
+    for i = 1, #zones do
+        local zoneOptions = zones[i].options
+        local serialized = {}
+        for j = 1, #zoneOptions do
+            serialized[j] = serializeOption(zoneOptions[j])
+        end
+        nuiZones[i] = { zoneId = i, options = serialized }
+    end
+
+    return nuiGroups, nuiZones
 end
 
 local function startTargeting()
@@ -273,7 +348,7 @@ local function startTargeting()
             local zoneOptions = nearbyZones[i].options
             local optionCount = #zoneOptions
             totalOptions += optionCount
-            zones[i] = zoneOptions
+            zones[i] = nearbyZones[i]
 
             for j = 1, optionCount do
                 local option = zoneOptions[j]
@@ -312,10 +387,14 @@ local function startTargeting()
                         })
                 end
 
+                -- ✅ Correction : on envoie un payload structuré avec des
+                -- indices numériques stables pour le callback select.
+                local nuiGroups, nuiZones = buildNuiPayload(zones)
+
                 SendNuiMessage(json.encode({
-                    event = 'setTarget',
-                    options = options,
-                    zones = zones,
+                    event   = 'setTarget',
+                    groups  = nuiGroups,
+                    zones   = nuiZones,
                 }, { sort_keys = true }))
             end
 
@@ -402,55 +481,78 @@ local function getResponse(option, server)
     return response
 end
 
+-- ─────────────────────────────────────────────────────────────
+-- ✅ Correction du callback select
+--
+-- React envoie maintenant : [groupIndex, optionIndex, zoneId?]
+--   groupIndex : 1-based index dans optionsGroups (pour les options entité)
+--                OU nil si c'est une zone
+--   optionIndex : 1-based index dans la liste d'options
+--   zoneId      : 1-based index de la zone (si c'est une option de zone)
+--
+-- Lookup Lua :
+--   zone  → nearbyZones[zoneId].options[optionIndex]
+--   entité → optionsGroups[groupIndex].list[optionIndex]
+-- ─────────────────────────────────────────────────────────────
 RegisterNUICallback('select', function(data, cb)
     cb(1)
 
-    local zone = data[3] and nearbyZones[data[3]]
+    local groupIndex  = data[1]  -- nil si zone
+    local optionIndex = data[2]
+    local zoneId      = data[3]  -- nil si entité
 
     ---@type KtTargetOption?
-    local option = zone and zone.options[data[2]] or options[data[1]][data[2]]
+    local option
 
-    if option then
-        if option.openMenu then
-            local menuDepth = #menuHistory
-
-            if option.name == 'builtin:goback' then
-                option.menuName = option.openMenu
-                option.openMenu = menuHistory[menuDepth]
-
-                if menuDepth > 0 then
-                    menuHistory[menuDepth] = nil
-                end
-            else
-                menuHistory[menuDepth + 1] = currentMenu
-            end
-
-            menuChanged = true
-            currentMenu = option.openMenu ~= 'home' and option.openMenu or nil
-
-            options:wipe()
-        else
-            state.setNuiFocus(false)
-        end
-
-        currentTarget.zone = zone?.id
-
-        if option.onSelect then
-            option.onSelect(option.qtarget and currentTarget.entity or getResponse(option))
-        elseif option.export then
-            exports[option.resource or zone.resource][option.export](nil, getResponse(option))
-        elseif option.event then
-            TriggerEvent(option.event, getResponse(option))
-        elseif option.serverEvent then
-            TriggerServerEvent(option.serverEvent, getResponse(option, true))
-        elseif option.command then
-            ExecuteCommand(option.command)
-        end
-
-        if option.menuName == 'home' then return end
+    if zoneId and nearbyZones and nearbyZones[zoneId] then
+        option = nearbyZones[zoneId].options[optionIndex]
+    elseif groupIndex and optionsGroups[groupIndex] then
+        option = optionsGroups[groupIndex].list[optionIndex]
     end
 
-    if not option?.openMenu and IsNuiFocused() then
+    if not option then return end
+
+    if option.openMenu then
+        local menuDepth = #menuHistory
+
+        if option.name == 'builtin:goback' then
+            option.menuName = option.openMenu
+            option.openMenu = menuHistory[menuDepth]
+
+            if menuDepth > 0 then
+                menuHistory[menuDepth] = nil
+            end
+        else
+            menuHistory[menuDepth + 1] = currentMenu
+        end
+
+        menuChanged = true
+        currentMenu = option.openMenu ~= 'home' and option.openMenu or nil
+
+        options:wipe()
+    else
+        state.setNuiFocus(false)
+    end
+
+    local zone = zoneId and nearbyZones and nearbyZones[zoneId] or nil
+    currentTarget.zone = zone?.id
+
+    if option.onSelect then
+        option.onSelect(option.qtarget and currentTarget.entity or getResponse(option))
+    elseif option.export then
+        local resource = option.resource or (zone and zone.resource) or nil
+        exports[resource][option.export](nil, getResponse(option))
+    elseif option.event then
+        TriggerEvent(option.event, getResponse(option))
+    elseif option.serverEvent then
+        TriggerServerEvent(option.serverEvent, getResponse(option, true))
+    elseif option.command then
+        ExecuteCommand(option.command)
+    end
+
+    if option.menuName == 'home' then return end
+
+    if not option.openMenu and IsNuiFocused() then
         state.setActive(false)
     end
 end)

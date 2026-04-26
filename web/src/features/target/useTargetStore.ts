@@ -37,6 +37,7 @@ export function useTargetStore(): TargetStore {
           setEyeHover(true);
           setNoOptions(null);
 
+          // ✅ parseOptions gère maintenant data.groups + data.zones
           const { meta, totalVisible } = parseOptions(data);
           setOptionsMeta(meta);
 

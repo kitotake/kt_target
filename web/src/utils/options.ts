@@ -1,4 +1,4 @@
-import type { NuiEvent, OptionMeta, TargetOption } from "../typings";
+import type { NuiEvent, OptionMeta } from "../typings";
 
 type SetTargetPayload = Extract<NuiEvent, { event: "setTarget" }>;
 
@@ -9,29 +9,42 @@ export function parseOptions(data: SetTargetPayload): {
   const meta: OptionMeta[] = [];
   let totalVisible = 0;
 
-  if (data.options) {
-    Object.entries(data.options).forEach(([type, list]) => {
-      (list as TargetOption[]).forEach((opt, index) => {
+  // ✅ Correction : on itère sur data.groups (tableau indexé numériquement)
+  // groupIndex est le rang 1-based du groupe → correspond à optionsGroups[groupIndex] côté Lua
+  if (data.groups) {
+    data.groups.forEach((group, gIdx) => {
+      const groupIndex = gIdx + 1; // 1-based pour Lua
+
+      group.options.forEach((opt, oIdx) => {
+        const optionIndex = oIdx + 1; // 1-based pour Lua
+
         if (!opt.hide) totalVisible++;
+
         meta.push({
-          key: `${type}-${index + 1}`,
-          type,
-          id: index + 1,
+          key: `${group.key}-${optionIndex}`,
+          groupIndex,
+          optionIndex,
+          // zoneId absent : c'est une option d'entité
           data: opt,
         });
       });
     });
   }
 
+  // ✅ Correction : on itère sur data.zones
+  // zoneId est fourni directement par le Lua dans le payload (1-based)
   if (data.zones) {
-    data.zones.forEach((zone, zoneIndex) => {
-      (zone as TargetOption[]).forEach((opt, index) => {
+    data.zones.forEach((zone) => {
+      zone.options.forEach((opt, oIdx) => {
+        const optionIndex = oIdx + 1; // 1-based pour Lua
+
         if (!opt.hide) totalVisible++;
+
         meta.push({
-          key: `zone-${zoneIndex + 1}-${index + 1}`,
-          type: "zones",
-          id: index + 1,
-          zoneId: zoneIndex + 1,
+          key: `zone-${zone.zoneId}-${optionIndex}`,
+          // groupIndex absent : c'est une option de zone
+          optionIndex,
+          zoneId: zone.zoneId,
           data: opt,
         });
       });

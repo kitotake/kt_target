@@ -1,3 +1,4 @@
+-- client/state.lua
 local state = {}
 
 local isActive = false
@@ -10,9 +11,14 @@ end
 ---@param value boolean
 function state.setActive(value)
     isActive = value
-
-    -- Toujours envoyer le message NUI pour synchroniser la visibilité du body
     SendNuiMessage(json.encode({ event = 'visible', state = value }))
+
+    -- ✅ Correction : quand on désactive le targeting (depuis n'importe où,
+    -- y compris disableTargeting() ou une ressource externe), on libère
+    -- toujours le focus NUI pour ne pas bloquer l'input du joueur.
+    if not value then
+        state.setNuiFocus(false)
+    end
 end
 
 local nuiFocus = false
@@ -42,6 +48,13 @@ end
 ---@param value boolean
 function state.setDisabled(value)
     isDisabled = value
+
+    -- ✅ Correction : si on disable le targeting depuis l'extérieur
+    -- (ex: moveObject dans object_target.lua), on s'assure de fermer
+    -- proprement le menu et de libérer le focus.
+    if value then
+        state.setActive(false)
+    end
 end
 
 return state

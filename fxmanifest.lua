@@ -9,7 +9,7 @@ version '1.17.3'
 repository 'https://github.com/kitotake/kt_target'
 description ''
 
-ui_page 'web/build/index.html'
+ui_page 'web/dist/index.html'
 
 shared_scripts {
     '@kt_lib/init.lua',
@@ -17,9 +17,6 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
-    'client/framework/union.lua',
-    'client/admin/object_target.lua',
-    
 }
 
 server_scripts {
@@ -36,6 +33,7 @@ files {
     'client/state.lua',
     'client/debug.lua',
     'client/defaults.lua',
+    'client/admin/object_target.lua',
     'client/framework/nd.lua',
     'client/framework/ox.lua',
     'client/framework/esx.lua',
