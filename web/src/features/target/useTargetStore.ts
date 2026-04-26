@@ -33,11 +33,12 @@ export function useTargetStore(): TargetStore {
           reset();
           break;
 
+
         case "setTarget": {
           setEyeHover(true);
           setNoOptions(null);
+          setOptionsMeta([]); // ✅ Toujours réinitialiser avant de recalculer
 
-          // ✅ parseOptions gère maintenant data.groups + data.zones
           const { meta, totalVisible } = parseOptions(data);
           setOptionsMeta(meta);
 
@@ -46,6 +47,7 @@ export function useTargetStore(): TargetStore {
           }
           break;
         }
+
       }
     },
     [reset]

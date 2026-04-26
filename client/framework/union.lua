@@ -56,10 +56,13 @@ local function refreshPlayerGroup()
     playerGroup = player.group or 'user'
 end
 
--- Initialisation différée pour laisser Union finir de charger
-SetTimeout(500, function()
-    refreshFromCharacter()
-    refreshPlayerGroup()
+-- Remplacer SetTimeout(500, ...) par :
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    SetTimeout(1000, function()
+        refreshFromCharacter()
+        refreshPlayerGroup()
+    end)
 end)
 
 -- ─────────────────────────────────────────────────────────────

@@ -1,21 +1,15 @@
 -- client/core/loop.lua
--- Boucle principale du système de ciblage.
--- Orchestre : raycast → detection → resolver → state → nui.
--- NOTE : la logique principale est dans client/main.lua.
--- Ce module expose des helpers pour contrôler la boucle depuis l'extérieur.
+-- Expose l'état de la boucle pour les modules externes (debug, admin…)
 
 local loop = {}
 
-local _running = false
+local _running  = false
+local _disabled = false
 
----@return boolean
-function loop.isRunning()
-    return _running
-end
+function loop.isRunning()  return _running  end
+function loop.isDisabled() return _disabled end
 
----@param value boolean
-function loop.setRunning(value)
-    _running = value
-end
+function loop.setRunning(v)  _running  = v end
+function loop.setDisabled(v) _disabled = v end
 
 return loop

@@ -1,32 +1,27 @@
 -- client/admin/object_target.lua
--- Système d'interaction admin sur les objets au sol via kt_target + Union
-
-local kt_target    = exports.kt_target
+local kt_target      = exports.kt_target
 local isMovingObject = false
 local frozenObjects  = {}
 
--- ─────────────────────────────────────────────────────────────
--- Vérifie si le joueur local est admin/founder via Union
--- ─────────────────────────────────────────────────────────────
-
 local function isAdmin()
-    -- Tente GetCurrentPlayer (plusieurs noms possibles)
     local ok, player
-
     ok, player = pcall(function() return exports['union']:GetCurrentPlayer() end)
     if not ok or not player then
         ok, player = pcall(function() return exports['union']:getPlayer() end)
     end
-
     if not ok or not player then return false end
-
     local group = player.group or 'user'
     return group == 'admin' or group == 'founder' or group == 'moderator'
 end
 
--- ─────────────────────────────────────────────────────────────
--- Infos de l'objet
--- ─────────────────────────────────────────────────────────────
+local function notify(title, type_, duration, description)
+    duration = duration or 3000
+    if lib and lib.notify then
+        lib.notify({ title = title, description = description, type = type_, duration = duration })
+    else
+        print(('[kt_target:admin] %s — %s'):format(title, description or ''))
+    end
+end
 
 local function showObjectInfos(data)
     local entity = data.entity
@@ -40,13 +35,7 @@ local function showObjectInfos(data)
                     and NetworkGetNetworkIdFromEntity(entity)
                     or 'local'
 
-    local msg = string.format(
-        "^3[Object Infos]^0\n" ..
-        "Model  : ^5%s^0 (%d)\n" ..
-        "NetId  : ^5%s^0\n" ..
-        "Coords : ^5%.2f, %.2f, %.2f^0\n" ..
-        "Heading: ^5%.1f°^0\n" ..
-        "Frozen : ^5%s^0",
+    local msg = ('Model: %s (%d)\nNetId: %s\nCoords: %.2f, %.2f, %.2f\nHeading: %.1f°\nFrozen: %s'):format(
         GetEntityArchetypeName(entity), model,
         tostring(netId),
         coords.x, coords.y, coords.z,
@@ -54,97 +43,74 @@ local function showObjectInfos(data)
         frozen and 'Oui' or 'Non'
     )
 
-    if lib and lib.notify then
-        lib.notify({ title = 'Infos Objet', description = msg, type = 'info', duration = 8000 })
-    else
-        print(msg)
-    end
+    notify('Infos Objet', 'info', 8000, msg)
 end
-
--- ─────────────────────────────────────────────────────────────
--- Geler / Dégeler
--- ─────────────────────────────────────────────────────────────
 
 local function toggleFreeze(data)
     local entity = data.entity
     if not DoesEntityExist(entity) then return end
 
-    local frozen = frozenObjects[entity]
+    local wasFrozen = frozenObjects[entity]
+    FreezeEntityPosition(entity, not wasFrozen)
+    frozenObjects[entity] = not wasFrozen or nil
 
-    FreezeEntityPosition(entity, not frozen)
-    frozenObjects[entity] = not frozen or nil
-
-    local state = not frozen and '^1Gelé' or '^2Dégelé'
-    if lib and lib.notify then
-        lib.notify({
-            title = 'Objet ' .. state .. '^0',
-            type  = frozen and 'success' or 'warning',
-            duration = 3000,
-        })
-    end
+    notify(not wasFrozen and 'Objet Gelé' or 'Objet Dégelé',
+           not wasFrozen and 'warning' or 'success', 3000)
 end
-
--- ─────────────────────────────────────────────────────────────
--- Déplacer (placement libre avec le curseur)
--- ─────────────────────────────────────────────────────────────
 
 local function moveObject(data)
     local entity = data.entity
     if not DoesEntityExist(entity) or isMovingObject then return end
 
     isMovingObject = true
-    exports.kt_target:disableTargeting(true)
-
+    kt_target:disableTargeting(true)
     DetachEntity(entity, false, false)
     FreezeEntityPosition(entity, true)
     SetEntityCollision(entity, false, false)
 
-    if lib and lib.notify then
-        lib.notify({
-            title       = 'Déplacement',
-            description = 'Clic gauche pour poser, Clic droit pour annuler',
-            type        = 'info',
-            duration    = 5000,
-        })
-    end
+    notify('Déplacement', 'info', 5000, 'Clic gauche = poser | Clic droit = annuler')
 
     CreateThread(function()
         while isMovingObject do
-            local hit, _, endCoords = lib.raycast.fromCamera(511 | 16, 4, 10)
+            -- Utilise le raycast interne de kt_target si lib n'est pas dispo
+            local coords, dir = GetWorldCoordFromScreenCoord(0.5, 0.5)
+            local dest = coords + dir * 10.0
+            local handle = StartShapeTestLosProbe(
+                coords.x, coords.y, coords.z,
+                dest.x, dest.y, dest.z,
+                1 | 16, entity, 4
+            )
 
-            if hit and endCoords then
+            local retval, hit, endCoords
+            repeat
+                Wait(0)
+                retval, hit, endCoords, _, _ = GetShapeTestResult(handle)
+            until retval ~= 1
+
+            if hit == 1 and endCoords then
                 SetEntityCoords(entity, endCoords.x, endCoords.y, endCoords.z, false, false, false, false)
             end
 
-            -- Rotation Q/E
             if IsControlPressed(0, 44) then
                 SetEntityHeading(entity, GetEntityHeading(entity) + 2.0)
             elseif IsControlPressed(0, 38) then
                 SetEntityHeading(entity, GetEntityHeading(entity) - 2.0)
             end
 
-            -- Clic gauche = poser
             if IsDisabledControlJustPressed(0, 24) then
                 FreezeEntityPosition(entity, false)
                 SetEntityCollision(entity, true, true)
                 isMovingObject = false
-                exports.kt_target:disableTargeting(false)
-
-                if lib and lib.notify then
-                    lib.notify({ title = 'Objet posé', type = 'success', duration = 2000 })
-                end
+                kt_target:disableTargeting(false)
+                notify('Objet posé', 'success', 2000)
             end
 
-            -- Clic droit = annuler
             if IsDisabledControlJustPressed(0, 25) then
                 FreezeEntityPosition(entity, false)
                 SetEntityCollision(entity, true, true)
                 isMovingObject = false
-                exports.kt_target:disableTargeting(false)
-
-                if lib and lib.notify then
-                    lib.notify({ title = 'Déplacement annulé', type = 'error', duration = 2000 })
-                end
+                kt_target:disableTargeting(false)
+                notify('Déplacement annulé', 'error', 2000)
             end
 
             Wait(0)
@@ -152,70 +118,61 @@ local function moveObject(data)
     end)
 end
 
--- ─────────────────────────────────────────────────────────────
--- Supprimer
--- ─────────────────────────────────────────────────────────────
-
 local function deleteObject(data)
     local entity = data.entity
     if not DoesEntityExist(entity) then return end
 
     if NetworkGetEntityIsNetworked(entity) then
         local netId = NetworkGetNetworkIdFromEntity(entity)
-        exports.kt_target:removeEntity(netId)
+        -- ✅ removeEntity attend un netId, pas l'entity handle
+        kt_target:removeEntity(netId)
         TriggerServerEvent('admin:object:delete', netId)
     else
-        exports.kt_target:removeLocalEntity(entity)
+        kt_target:removeLocalEntity(entity)
         DeleteObject(entity)
     end
 
-    if lib and lib.notify then
-        lib.notify({ title = 'Objet supprimé', type = 'success', duration = 2000 })
-    end
+    notify('Objet supprimé', 'success', 2000)
 end
-
--- ─────────────────────────────────────────────────────────────
--- Enregistrement des interactions globales sur les objets
--- ─────────────────────────────────────────────────────────────
 
 kt_target:addGlobalObject({
     {
-        name      = 'admin:object:menu',
-        icon      = 'fa-solid fa-screwdriver-wrench',
-        label     = 'Admin — Objet',
-        openMenu  = 'admin_object_menu',
+        name        = 'admin:object:menu',
+        icon        = 'fa-solid fa-screwdriver-wrench',
+        label       = 'Admin — Objet',
+        openMenu    = 'admin_object_menu',
         canInteract = function() return isAdmin() end,
     },
     {
-        name      = 'admin:object:infos',
-        icon      = 'fa-solid fa-circle-info',
-        label     = 'Informations',
-        menuName  = 'admin_object_menu',
-        onSelect  = showObjectInfos,
+        name        = 'admin:object:infos',
+        icon        = 'fa-solid fa-circle-info',
+        label       = 'Informations',
+        menuName    = 'admin_object_menu',
+        onSelect    = showObjectInfos,
         canInteract = function() return isAdmin() end,
     },
     {
-        name      = 'admin:object:freeze',
-        icon      = 'fa-solid fa-snowflake',
-        label     = 'Geler / Dégeler',
-        menuName  = 'admin_object_menu',
-        onSelect  = toggleFreeze,
+        name        = 'admin:object:freeze',
+        icon        = 'fa-solid fa-snowflake',
+        label       = 'Geler / Dégeler',
+        menuName    = 'admin_object_menu',
+        onSelect    = toggleFreeze,
         canInteract = function() return isAdmin() end,
     },
     {
-        name      = 'admin:object:move',
-        icon      = 'fa-solid fa-up-down-left-right',
-        label     = 'Déplacer',
-        menuName  = 'admin_object_menu',
-        onSelect  = moveObject,
+        name        = 'admin:object:move',
+        icon        = 'fa-solid fa-up-down-left-right',
+        label       = 'Déplacer',
+        menuName    = 'admin_object_menu',
+        onSelect    = moveObject,
         canInteract = function() return isAdmin() end,
     },
     {
-        name      = 'admin:object:delete',
-        icon      = 'fa-solid fa-trash',
-        label     = 'Supprimer',
-        menuName  = 'admin_object_menu',
-        onSelect  = deleteObject,
+        name        = 'admin:object:delete',
+        icon        = 'fa-solid fa-trash',
+        label       = 'Supprimer',
+        menuName    = 'admin_object_menu',
+        onSelect    = deleteObject,
         canInteract = function() return isAdmin() end,
     },
 })

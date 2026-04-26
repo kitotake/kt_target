@@ -1,10 +1,14 @@
 -- client/core/executor.lua
--- Exécute l'action associée à une option sélectionnée.
-
 local executor = {}
 
+local function shallowClone(t)
+    local copy = {}
+    for k, v in pairs(t) do copy[k] = v end
+    return copy
+end
+
 ---@param option KtTargetOption
----@param response table   données enrichies (entity, coords, distance, zone…)
+---@param response table
 function executor.run(option, response)
     if option.onSelect then
         local ok, err = pcall(option.onSelect,
@@ -14,9 +18,8 @@ function executor.run(option, response)
         end
 
     elseif option.export then
-        local resource = option.resource
         local ok, err = pcall(function()
-            exports[resource][option.export](nil, response)
+            exports[option.resource][option.export](nil, response)
         end)
         if not ok then
             warn(('[kt_target] executor.run — export error: %s'):format(err))
@@ -26,8 +29,7 @@ function executor.run(option, response)
         TriggerEvent(option.event, response)
 
     elseif option.serverEvent then
-        -- Convertit l'entity en netId pour le serveur
-        local serverResponse = table.clone(response)
+        local serverResponse = shallowClone(response)
         serverResponse.entity = response.entity ~= 0
             and NetworkGetEntityIsNetworked(response.entity)
             and NetworkGetNetworkIdFromEntity(response.entity)
