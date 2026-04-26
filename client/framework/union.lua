@@ -1,7 +1,6 @@
 -- client/framework/union.lua
 -- Intégration Union Framework dans kt_target
 
-
 local utils = require 'client.utils'
 
 -- Cache local du personnage actif
@@ -10,45 +9,68 @@ local playerGrade = 0
 local playerGroup = 'user'  -- admin, moderator, founder, user
 
 -- ─────────────────────────────────────────────────────────────
--- Initialisation au chargement (si le joueur est déjà spawné)
+-- Helpers d'accès aux exports Union (noms variables selon version)
 -- ─────────────────────────────────────────────────────────────
-local function refreshFromCharacter()
-    local ok, char = pcall(function()
-        return exports['union']:GetCurrentCharacter()
-    end)
 
-    if not ok or not char then return end
+local function getUnionCharacter()
+    -- Tente plusieurs noms d'export selon la version de Union
+    local ok, result
+
+    ok, result = pcall(function() return exports['union']:GetCurrentCharacter() end)
+    if ok and result then return result end
+
+    ok, result = pcall(function() return exports['union']:getCharacter() end)
+    if ok and result then return result end
+
+    return nil
+end
+
+local function getUnionPlayer()
+    local ok, result
+
+    ok, result = pcall(function() return exports['union']:GetCurrentPlayer() end)
+    if ok and result then return result end
+
+    ok, result = pcall(function() return exports['union']:getPlayer() end)
+    if ok and result then return result end
+
+    return nil
+end
+
+-- ─────────────────────────────────────────────────────────────
+-- Refresh depuis le personnage actif
+-- ─────────────────────────────────────────────────────────────
+
+local function refreshFromCharacter()
+    local char = getUnionCharacter()
+    if not char then return end
 
     playerJob   = char.job       or 'unemployed'
     playerGrade = char.job_grade or 0
 end
 
 local function refreshPlayerGroup()
-    local ok, player = pcall(function()
-        return exports['union']:GetCurrentPlayer()
-    end)
-
-    if not ok or not player then return end
+    local player = getUnionPlayer()
+    if not player then return end
 
     playerGroup = player.group or 'user'
 end
 
+-- Initialisation différée pour laisser Union finir de charger
 SetTimeout(500, function()
     refreshFromCharacter()
     refreshPlayerGroup()
 end)
 
 -- ─────────────────────────────────────────────────────────────
--- Mise à jour en live quand le job change
+-- Events Union
 -- ─────────────────────────────────────────────────────────────
+
 RegisterNetEvent('union:job:updated', function(job, grade)
     playerJob   = job   or 'unemployed'
     playerGrade = grade or 0
 end)
 
--- ─────────────────────────────────────────────────────────────
--- Reset à la déconnexion / changement de personnage
--- ─────────────────────────────────────────────────────────────
 RegisterNetEvent('union:character:deselected', function()
     playerJob   = 'unemployed'
     playerGrade = 0
@@ -60,18 +82,21 @@ RegisterNetEvent('union:player:spawned', function()
     refreshPlayerGroup()
 end)
 
+-- Certaines versions de Union utilisent cet événement
+RegisterNetEvent('union:character:selected', function()
+    SetTimeout(200, function()
+        refreshFromCharacter()
+        refreshPlayerGroup()
+    end)
+end)
+
 -- ─────────────────────────────────────────────────────────────
--- hasPlayerGotGroup — utilisé par kt_target pour filtrer les options
+-- hasPlayerGotGroup
 --
--- Supporte les formats :
+-- Supporte :
 --   string           → "police"
 --   array            → { "police", "ambulance" }
 --   hash (grade min) → { police = 0, ambulance = 2 }
---
--- Note : le bypass admin/founder a été supprimé — il contournait
--- tous les filtres de job, ce qui causait des incohérences de gameplay.
--- Si tu veux le réactiver pour certaines options spécifiques, utilise
--- canInteract dans la définition de l'option.
 -- ─────────────────────────────────────────────────────────────
 
 ---@diagnostic disable-next-line: duplicate-set-field
@@ -87,7 +112,6 @@ function utils.hasPlayerGotGroup(filter)
         local tabletype = table.type(filter)
 
         if tabletype == 'hash' then
-            -- { police = 0, ambulance = 2 } → job ET grade minimum requis
             for jobName, minGrade in pairs(filter) do
                 if playerJob == jobName and playerGrade >= minGrade then
                     return true
@@ -95,7 +119,6 @@ function utils.hasPlayerGotGroup(filter)
             end
 
         elseif tabletype == 'array' then
-            -- { "police", "ambulance" } → n'importe lequel suffit
             for i = 1, #filter do
                 if playerJob == filter[i] then
                     return true
@@ -107,5 +130,4 @@ function utils.hasPlayerGotGroup(filter)
     return false
 end
 
-
-print('[kt_target] Chargement du module framework/union.lua')
+print('[kt_target] Module framework/union.lua chargé — job:', playerJob, '| group:', playerGroup)

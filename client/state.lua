@@ -11,9 +11,8 @@ end
 function state.setActive(value)
     isActive = value
 
-    if value then
-        SendNuiMessage('{"event": "visible", "state": true}')
-    end
+    -- Toujours envoyer le message NUI pour synchroniser la visibilité du body
+    SendNuiMessage(json.encode({ event = 'visible', state = value }))
 end
 
 local nuiFocus = false
@@ -24,6 +23,7 @@ function state.isNuiFocused()
 end
 
 ---@param value boolean
+---@param cursor? boolean
 function state.setNuiFocus(value, cursor)
     if value then SetCursorLocation(0.5, 0.5) end
 

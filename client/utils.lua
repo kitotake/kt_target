@@ -13,13 +13,15 @@ local GetShapeTestResultIncludingMaterial = GetShapeTestResultIncludingMaterial
 function utils.raycastFromCamera(flag)
     local coords, normal = GetWorldCoordFromScreenCoord(0.5, 0.5)
     local destination = coords + normal * 10
-    local handle = StartShapeTestLosProbe(coords.x, coords.y, coords.z, destination.x, destination.y, destination.z,
-        flag, cache.ped, 4)
+    local handle = StartShapeTestLosProbe(
+        coords.x, coords.y, coords.z,
+        destination.x, destination.y, destination.z,
+        flag, cache.ped, 4
+    )
 
     while true do
         Wait(0)
-        local retval, hit, endCoords, surfaceNormal, materialHash, entityHit = GetShapeTestResultIncludingMaterial(
-        handle)
+        local retval, hit, endCoords, surfaceNormal, materialHash, entityHit = GetShapeTestResultIncludingMaterial(handle)
 
         if retval ~= 1 then
             ---@diagnostic disable-next-line: return-type-mismatch
@@ -34,16 +36,16 @@ end
 
 -- SetDrawOrigin is limited to 32 calls per frame. Set as 0 to disable.
 local drawZoneSprites = GetConvarInt('kt_target:drawSprite', 24)
-local SetDrawOrigin = SetDrawOrigin
-local DrawSprite = DrawSprite
-local ClearDrawOrigin = ClearDrawOrigin
-local colour = vector(155, 155, 155, 175)
-local hover = vector(98, 135, 236, 255)
-local currentZones = {}
+local SetDrawOrigin    = SetDrawOrigin
+local DrawSprite       = DrawSprite
+local ClearDrawOrigin  = ClearDrawOrigin
+local colour     = vector(155, 155, 155, 175)
+local hover      = vector(98, 135, 236, 255)
+local currentZones  = {}
 local previousZones = {}
-local drawZones = {}
-local drawN = 0
-local width = 0.02
+local drawZones     = {}
+local drawN  = 0
+local width  = 0.02
 local height = width * GetAspectRatio(false)
 
 if drawZoneSprites == 0 then drawZoneSprites = -1 end
@@ -86,9 +88,7 @@ function utils.getNearbyZones(coords)
             local found = false
 
             for j = 1, previousN do
-                local zoneB = previousZones[j]
-
-                if zoneA == zoneB then
+                if zoneA == previousZones[j] then
                     found = true
                     break
                 end
@@ -112,13 +112,17 @@ function utils.drawZoneSprites(dict, texture)
 
         if zone.drawSprite ~= false then
             SetDrawOrigin(zone.coords.x, zone.coords.y, zone.coords.z)
-            DrawSprite(dict, texture, 0, 0, width, height, 0, spriteColour.r, spriteColour.g, spriteColour.b,
-                spriteColour.a)
+            DrawSprite(dict, texture, 0, 0, width, height, 0,
+                spriteColour.r, spriteColour.g, spriteColour.b, spriteColour.a)
         end
     end
 
     ClearDrawOrigin()
 end
+
+-- ─────────────────────────────────────────────────────────────
+-- Export detection helper
+-- ─────────────────────────────────────────────────────────────
 
 function utils.hasExport(export)
     local resource, exportName = string.strsplit('.', export)
@@ -127,6 +131,10 @@ function utils.hasExport(export)
         return exports[resource][exportName]
     end)
 end
+
+-- ─────────────────────────────────────────────────────────────
+-- Items
+-- ─────────────────────────────────────────────────────────────
 
 local playerItems = {}
 
@@ -173,14 +181,24 @@ function utils.hasPlayerGotItems(filter, hasAny)
     return not hasAny
 end
 
----stub
+-- ─────────────────────────────────────────────────────────────
+-- Groups — stub (overridden by framework modules)
+-- ─────────────────────────────────────────────────────────────
+
 ---@param filter string | string[] | table<string, number>
 ---@return boolean
 function utils.hasPlayerGotGroup(filter)
     return true
 end
 
+-- ─────────────────────────────────────────────────────────────
+-- Framework auto-detection
+-- Note : on teste d'abord Union car c'est le framework du serveur.
+-- Les autres restent en fallback.
+-- ─────────────────────────────────────────────────────────────
+
 SetTimeout(0, function()
+    -- Inventory (kt_inventory)
     if utils.hasExport('kt_inventory.Items') then
         setmetatable(playerItems, {
             __index = function(self, index)
@@ -194,7 +212,15 @@ SetTimeout(0, function()
         end)
     end
 
-    if utils.hasExport('kt_core.GetPlayer') then
+    -- Framework detection (order matters: Union first, then others)
+    -- On teste plusieurs noms d'export possibles pour Union
+    local hasUnion = utils.hasExport('union.GetCurrentPlayer')
+                  or utils.hasExport('union.GetCurrentCharacter')
+                  or utils.hasExport('union.getPlayer')
+
+    if hasUnion then
+        require 'client.framework.union'
+    elseif utils.hasExport('kt_core.GetPlayer') then
         require 'client.framework.ox'
     elseif utils.hasExport('es_extended.getSharedObject') then
         require 'client.framework.esx'
@@ -202,10 +228,12 @@ SetTimeout(0, function()
         require 'client.framework.qbx'
     elseif utils.hasExport('ND_Core.getPlayer') then
         require 'client.framework.nd'
-    elseif utils.hasExport('union.getPlayer') then
-        require 'client.framework.union'
     end
 end)
+
+-- ─────────────────────────────────────────────────────────────
+-- Warn helper
+-- ─────────────────────────────────────────────────────────────
 
 function utils.warn(msg)
     local trace = Citizen.InvokeNative(`FORMAT_STACK_TRACE` & 0xFFFFFFFF, nil, 0, Citizen.ResultAsString())

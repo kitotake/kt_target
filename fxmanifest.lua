@@ -9,7 +9,7 @@ version '1.17.3'
 repository 'https://github.com/kitotake/kt_target'
 description ''
 
-ui_page 'web/index.html'
+ui_page 'web/build/index.html'
 
 shared_scripts {
     '@kt_lib/init.lua',
@@ -17,7 +17,9 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
-    'client/admin/object_target.lua',   -- ← AJOUT
+    'client/framework/union.lua',
+    'client/admin/object_target.lua',
+    
 }
 
 server_scripts {
@@ -25,8 +27,9 @@ server_scripts {
 }
 
 files {
-    'web/build/index.html',
-    'web/build/**/*',
+    'web/dist/index.html',
+    'web/dist/assets/*.js',
+    'web/dist/assets/*.css',
     'locales/*.json',
     'client/api.lua',
     'client/utils.lua',
@@ -39,7 +42,6 @@ files {
     'client/framework/qbx.lua',
     'client/framework/union.lua',
     'client/compat/qtarget.lua',
-    'client/admin/object_target.lua',   -- ← AJOUT
 }
 
 provide 'qtarget'
