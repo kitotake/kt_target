@@ -21,8 +21,6 @@ export const App: React.FC = () => {
       {optionsMeta.map((meta) => (
         <Option
           key={meta.key}
-          // ✅ On passe groupIndex / optionIndex / zoneId
-          // (plus "type" et "id" qui ne correspondent à rien côté Lua)
           groupIndex={meta.groupIndex}
           optionIndex={meta.optionIndex}
           zoneId={meta.zoneId}

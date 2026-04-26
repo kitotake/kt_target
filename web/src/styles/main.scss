@@ -5,8 +5,8 @@
 :root {
   --color-default: #cfd2da;
   --color-hover: #ffffff;
-  --color-accent: #a78bfa;
-  --color-icon-default: #8b8fa8;
+  --color-accent: #ffb775;
+  --color-icon-default: #000000;
 
   --bg-option: rgba(12, 12, 16, 0.72);
   --bg-option-hover: rgba(22, 22, 30, 0.82);
@@ -32,7 +32,8 @@ body {
   overflow: hidden;
   user-select: none;
   white-space: nowrap;
-  visibility: hidden; // NUI hidden by default; shown via JS
+  // NUI hidden par défaut — affiché/masqué via JS (useVisibility)
+  visibility: hidden;
   background: transparent;
 }
 
@@ -40,21 +41,36 @@ p {
   margin: 0;
 }
 
+// ─── Œil (crosshair) ─────────────────────────────────────────────────────────
+// Centré à l'écran, indépendant du options-wrapper.
+// Utilise fill="currentColor" dans l'SVG de index.html.
+
 #eye {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  // ✅ color contrôle fill="currentColor" du SVG inline
+  color: var(--color-icon-default);
+  // On ne met pas de font-size ici — la taille est gérée
+  // par les attributs height/width du SVG dans index.html.
+  transition:
+    color var(--transition-speed) ease,
+    filter var(--transition-speed) ease;
 }
 
+// ✅ Classe ajoutée/retirée via setEyeHover() dans eye.ts
+// Cible l'élément #eyeSvg (enfant direct de #eye)
 #eyeSvg {
   display: block;
+  // La taille vient des attributs width/height du SVG (36px dans index.html)
+  // On peut les surcharger ici si besoin :
   width: 22pt;
   height: 22pt;
-  fill: transparent;
-  color: var(--color-icon-default);
-  transition: color var(--transition-speed) ease,
-              filter var(--transition-speed) ease;
+  // fill="currentColor" dans le SVG — color: hérité de #eye
+  transition:
+    color var(--transition-speed) ease,
+    filter var(--transition-speed) ease;
 
   &.eye-hover {
     color: var(--color-accent);
@@ -63,11 +79,13 @@ p {
 }
 
 // ─── Options wrapper ─────────────────────────────────────────────────────────
+// Positionné à droite du centre, légèrement au-dessus du milieu.
+// Identique au positionnement de l'ancien style.css.
 
 #options-wrapper {
   position: absolute;
   top: 48.4%;
-  left: calc(50% + 20pt);
+  left: calc(50% + 18pt); // ✅ Aligné sur l'ancien style (18pt, pas 20pt)
 
   display: flex;
   flex-direction: column;
@@ -75,6 +93,11 @@ p {
 }
 
 // ─── No-options label ────────────────────────────────────────────────────────
+// ✅ Retiré de position:absolute indépendant — il est maintenant
+// dans le flux de #options-wrapper (flex column), ce qui est correct.
+// Si tu veux qu'il soit positionné de façon identique à l'ancien code,
+// il faudrait le remettre hors du wrapper dans index.html.
+// Ici on garde l'approche dans le flux (plus maintenable).
 
 #no-options {
   color: var(--color-default);
@@ -87,9 +110,9 @@ p {
 
   background: linear-gradient(
     90deg,
-    var(--bg-option) 0%,
-    rgba(12, 12, 16, 0.35) 60%,
-    var(--bg-fade-stop) 100%
+    rgba(20, 20, 20, 0.5) 0%,
+    rgba(20, 20, 20, 0.3) 60%,
+    rgba(47, 48, 53, 0) 100%
   );
 
   border-left: 2px solid rgba(167, 139, 250, 0.25);
@@ -122,7 +145,7 @@ p {
   border-left: 2px solid transparent;
   border-radius: 1pt;
 
-  position: relative; // requis pour la cooldown-bar en absolute
+  position: relative;
   cursor: pointer;
   transition:
     color var(--transition-speed) ease,
@@ -131,7 +154,7 @@ p {
     padding-left var(--transition-speed) ease,
     filter var(--transition-speed) ease;
 
-  // ── Hover state ─────────────────────────────────────────────────────────
+  // ── Hover ────────────────────────────────────────────────────────────────
   &:hover {
     color: var(--color-hover);
     padding-left: 3pt;
@@ -151,13 +174,13 @@ p {
     }
   }
 
-  // ── Active / click flash ────────────────────────────────────────────────
+  // ── Click flash ───────────────────────────────────────────────────────────
   &:active {
     filter: brightness(1.25);
   }
 }
 
-// ─── Icon ────────────────────────────────────────────────────────────────────
+// ─── Icon ─────────────────────────────────────────────────────────────────────
 
 .option-icon {
   flex-shrink: 0;
@@ -184,14 +207,13 @@ p {
   white-space: nowrap;
 }
 
-// ─── Cooldown bar ────────────────────────────────────────────────────────────
+// ─── Cooldown bar ─────────────────────────────────────────────────────────────
 
 .option-cooling {
   cursor: not-allowed;
   opacity: 0.8;
 
   &:hover {
-    // Pas de décalage ni accent quand en cooldown
     padding-left: 0;
     border-left-color: rgba(167, 139, 250, 0.15);
     color: var(--color-default);
@@ -223,15 +245,12 @@ p {
     rgba(167, 139, 250, 0.4) 100%
   );
   transform-origin: left center;
-  // La transform scaleX est animée via JS (requestAnimationFrame)
-  // On désactive la transition CSS pour ne pas lutter contre le RAF
-  transition: none;
+  transition: none; // animé via JS requestAnimationFrame
   box-shadow: 0 0 6px rgba(167, 139, 250, 0.5);
 }
 
-// ─── Animations ──────────────────────────────────────────────────────────────
+// ─── Slide-in animation ───────────────────────────────────────────────────────
 
-// Slide-in when options appear (applied via JS class or React key remounting)
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -246,7 +265,6 @@ p {
 .option-container {
   animation: slideIn 180ms ease both;
 
-  // Stagger each child via nth-child (up to 12 options)
   @for $i from 1 through 12 {
     &:nth-child(#{$i}) {
       animation-delay: #{($i - 1) * 35}ms;
