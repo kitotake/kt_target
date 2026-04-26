@@ -28,23 +28,16 @@ export const Option: React.FC<OptionProps> = ({ groupIndex, optionIndex, zoneId,
       ? [undefined, optionIndex, zoneId]
       : [groupIndex!, optionIndex, undefined];
 
-    try {
-      await fetchNui("select", payload);
+    await fetchNui("select", payload);
 
-      if (data.cooldown && data.cooldown > 0) {
-        unlockHandledByCooldown = true;
-        startCooldown(data.cooldown, () => {
-          if (el) el.style.pointerEvents = "auto";
-        });
-      }
-    } catch (error) {
-      console.error("[Option] Failed to send selection to NUI:", error);
-    } finally {
-      if (!unlockHandledByCooldown) {
-        setTimeout(() => {
-          if (el) el.style.pointerEvents = "auto";
-        }, CLICK_LOCKOUT_MS);
-      }
+    if (data.cooldown && data.cooldown > 0) {
+      startCooldown(data.cooldown, () => {
+        if (el) el.style.pointerEvents = "auto";
+      });
+    } else {
+      setTimeout(() => {
+        if (el) el.style.pointerEvents = "auto";
+      }, CLICK_LOCKOUT_MS);
     }
   };
 

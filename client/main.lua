@@ -207,7 +207,8 @@ end)
 
 -- ─── NUI Callbacks ────────────────────────────────────────────────────────────
 
-RegisterNuiCallback('select', function(data, cb)
+RegisterNUICallback('select', function(data, cb)
+    print('Option sélectionnée :', json.encode(data))
     -- data = [groupIndex, optionIndex, zoneId?] (1-based, depuis React)
     local groupIndex  = data[1]
     local optionIndex = data[2]
