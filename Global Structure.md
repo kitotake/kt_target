@@ -15,12 +15,12 @@ kt_target/
 |           create-release.yml
 |           
 +---client
-|   |   api.lua 'A supprime ?'
-|   |   debug.lua 'A supprime ?'
-|   |   defaults.lua 'A supprime ?'
-|   |   main.lua 'A supprime ?'
-|   |   state.lua 'A supprime ?'
-|   |   utils.lua 'A supprime ?'
+|   |   api.lua 
+|   |   debug.lua 
+|   |   defaults.lua 
+|   |   main.lua 
+|   |   state.lua 
+|   |   utils.lua 
 |   |   
 |   +---admin
 |   |       object_target.lua
@@ -42,7 +42,7 @@ kt_target/
 |   |       resolver.lua
 |   |       
 |   +---debug
-|   |       debug.lua
+|   |       init.lua
 |   |       
 |   +---framework
 |   |       esx.lua
