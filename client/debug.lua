@@ -1,2 +1,9 @@
 -- client/debug.lua
-require 'client.debug.debug'
+
+local debug = {}
+
+function debug.print(msg)
+    print('[kt_target DEBUG] ' .. tostring(msg))
+end
+
+return debug

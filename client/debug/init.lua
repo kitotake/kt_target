@@ -1,4 +1,4 @@
--- client/debug/debug.lua
+-- client/debug/init.lua
 -- Utilitaires de débogage avancés (outline, logs, overlays).
 -- Chargé uniquement si kt_target:debug == 1.
 

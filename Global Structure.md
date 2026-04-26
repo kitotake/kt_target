@@ -46,9 +46,6 @@ kt_target/
 |   |       
 |   +---framework
 |   |       esx.lua
-|   |       nd.lua
-|   |       ox.lua
-|   |       qbx.lua
 |   |       union.lua
 |   |       
 |   +---nui
@@ -201,7 +198,6 @@ Client-side bridge between Lua and the React interface.
 ### `client/framework/`
 Framework adapters for different ecosystems:
 - ESX
-- OX
 - Union
 
 ### `server/`

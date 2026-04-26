@@ -54,7 +54,6 @@ client_scripts {
 
     -- Framework adapters (requireables depuis main.lua)
     'client/framework/esx.lua',
-    'client/framework/ox.lua',
     'client/framework/union.lua',
 
     -- Admin (requireable)
@@ -70,7 +69,7 @@ client_scripts {
     'client/commands/target.lua',
 
     -- Debug (top-level, guard interne par convar)
-    'client/debug/debug.lua',
+    'client/debug/init.lua',
 }
 
 -- ─── Serveur ─────────────────────────────────────────────────────────────────

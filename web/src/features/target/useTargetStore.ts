@@ -23,31 +23,36 @@ export function useTargetStore(): TargetStore {
 
   const handleNuiEvent = useCallback(
     (data: NuiEvent) => {
+      if (!data || !data.event) return;
+
       switch (data.event) {
-        case "visible":
-          setVisible(!!data.state);
-          if (!data.state) reset();
-          break;
+        case "visible": {
+          const isVisible = !!data.state;
+          setVisible(isVisible);
 
-        case "leftTarget":
-          reset();
-          break;
-
-
-        case "setTarget": {
-          setEyeHover(true);
-          setNoOptions(null);
-          setOptionsMeta([]); // ✅ Toujours réinitialiser avant de recalculer
-
-          const { meta, totalVisible } = parseOptions(data);
-          setOptionsMeta(meta);
-
-          if (totalVisible === 0) {
-            setNoOptions(data.noOptionsLabel ?? DEFAULT_NO_OPTIONS_LABEL);
-          }
+          if (!isVisible) reset();
           break;
         }
 
+        case "leftTarget": {
+          reset();
+          break;
+        }
+
+        case "setTarget": {
+          setEyeHover(true);
+
+          const { meta, totalVisible } = parseOptions(data);
+
+          setOptionsMeta(meta);
+          setNoOptions(
+            totalVisible === 0
+              ? data.noOptionsLabel ?? DEFAULT_NO_OPTIONS_LABEL
+              : null
+          );
+
+          break;
+        }
       }
     },
     [reset]

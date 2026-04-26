@@ -1,9 +1,9 @@
 -- client/registry/zones.lua
 -- Registre des zones interactives (PolyZone, BoxZone, SphereZone).
--- Les zones sont gérées par ox_lib (lib.zones.*).
+-- Les zones sont gérées par kt_lib (lib.zones.*).
 -- Ce fichier sert de point d'entrée documentaire.
 
--- Les zones sont créées via ox_lib et récupérées avec :
+-- Les zones sont créées via kt_lib et récupérées avec :
 --   lib.zones.getAllZones()
 --   lib.zones.getNearbyZones()
 --

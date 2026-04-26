@@ -107,4 +107,4 @@ function utils.hasPlayerGotGroup(filter)
     return false
 end
 
-print(('[kt_target] Adapteur Union chargé — job: %s | group: %s'):format(playerJob, playerGroup))
+print('[kt_target] Adapteur Union chargé '.. (unionOk and 'avec succès.' or 'mais union semble indisponible.'))

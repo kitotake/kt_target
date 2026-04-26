@@ -134,7 +134,7 @@ CreateThread(function()
 
             local dist = hit and #(coords - endCoords) or Config.maxDistance
 
-            -- 2. Détection zones (ox_lib)
+            -- 2. Détection zones (kt_lib)
             local nearbyZones = {}
             if lib.zones then
                 for _, zone in ipairs(lib.zones.getNearby and lib.zones.getNearby(coords, Config.zoneDistance) or {}) do
