@@ -1,0 +1,11 @@
+-- client/registry/models.lua
+-- Registre des options ciblant un ou plusieurs modèles spécifiques.
+-- Géré directement dans client/api.lua (table `models`).
+-- Ce fichier sert de point d'entrée documentaire.
+
+-- Les données sont stockées dans client/api.lua :
+--   models[modelHash] = { KtTargetOption, ... }
+--
+-- API publique :
+--   exports.kt_target:addModel(arr, options)
+--   exports.kt_target:removeModel(arr, options?)

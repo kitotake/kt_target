@@ -28,18 +28,17 @@ files {
     'web/dist/assets/*.js',
     'web/dist/assets/*.css',
     'locales/*.json',
-    'client/api.lua',
-    'client/utils.lua',
-    'client/state.lua',
-    'client/debug.lua',
-    'client/defaults.lua',
-    'client/admin/object_target.lua',
-    'client/framework/nd.lua',
-    'client/framework/ox.lua',
-    'client/framework/esx.lua',
-    'client/framework/qbx.lua',
-    'client/framework/union.lua',
-    'client/compat/qtarget.lua',
+ 
+    'client/core/loop.lua',
+    'client/core/raycast.lua',
+    'client/core/detection.lua',
+    'client/core/resolver.lua',
+    'client/core/executor.lua',
+    'client/registry/entities.lua',
+    'client/registry/globals.lua',
+    'client/registry/models.lua',
+    'client/registry/zones.lua',
+
 }
 
 provide 'qtarget'

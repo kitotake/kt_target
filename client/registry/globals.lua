@@ -1,0 +1,18 @@
+-- client/registry/globals.lua
+-- Registre des options globales (tous peds, véhicules, objets, joueurs).
+-- Géré directement dans client/api.lua.
+-- Ce fichier sert de point d'entrée documentaire.
+
+-- Les données sont stockées dans client/api.lua :
+--   peds    = { KtTargetOption, ... }
+--   vehicles = { KtTargetOption, ... }
+--   objects  = { KtTargetOption, ... }
+--   players  = { KtTargetOption, ... }
+--   global   = { KtTargetOption, ... }  ← toutes entités
+--
+-- API publique :
+--   exports.kt_target:addGlobalPed(options)
+--   exports.kt_target:addGlobalVehicle(options)
+--   exports.kt_target:addGlobalObject(options)
+--   exports.kt_target:addGlobalPlayer(options)
+--   exports.kt_target:addGlobalOption(options)

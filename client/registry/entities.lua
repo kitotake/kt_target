@@ -1,0 +1,11 @@
+-- client/registry/entities.lua
+-- Registre des options ciblant des entités réseau spécifiques (par netId).
+-- Géré directement dans client/api.lua (table `entities`).
+-- Ce fichier sert de point d'entrée documentaire.
+
+-- Les données sont stockées dans client/api.lua :
+--   entities[netId] = { KtTargetOption, ... }
+--
+-- API publique :
+--   exports.kt_target:addEntity(arr, options)
+--   exports.kt_target:removeEntity(arr, options?)
