@@ -40,18 +40,17 @@ p {
   margin: 0;
 }
 
-// ─── Eye / Crosshair ─────────────────────────────────────────────────────────
-
-#eyeSvg {
+#eye {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
 
+#eyeSvg {
+  display: block;
   width: 22pt;
   height: 22pt;
-
-  // SVG background injected via Lua/NUI; color driven by fill currentColor
   fill: transparent;
   color: var(--color-icon-default);
   transition: color var(--transition-speed) ease,

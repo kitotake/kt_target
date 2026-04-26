@@ -1,16 +1,14 @@
-const resource = (window as any).GetParentResourceName?.() ?? "nui-resource";
+import { RESOURCE_NAME } from "../config";
 
-export async function fetchNui<T = any>(
+export async function fetchNui<T = unknown>(
   eventName: string,
-  data?: any
+  data?: unknown
 ): Promise<T> {
-  const resp = await fetch(`https://${resource}/${eventName}`, {
+  const resp = await fetch(`https://${RESOURCE_NAME}/${eventName}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-    },
+    headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify(data),
   });
 
-  return resp.json();
+  return resp.json() as Promise<T>;
 }

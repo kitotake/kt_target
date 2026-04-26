@@ -1,86 +1,50 @@
-import React, { useEffect, useRef, useState } from "react";
-import { fetchNui } from "../utils/fetchNui";
+import React, { useRef } from "react";
+import { fetchNui } from "../utils";
+import { useCooldown } from "../hooks";
+import { CLICK_LOCKOUT_MS } from "../config";
+import { CooldownBar } from "./CooldownBar";
+import type { OptionMeta } from "../typings";
 
-type OptionProps = {
-  type: string;
-  id: number;
-  zoneId?: number;
-  data: {
-    label: string;
-    icon: string;
-    iconColor?: string;
-    hide?: boolean;
-    cooldown?: number; // ms — optionnel, défini côté Lua
-  };
-};
+type OptionProps = Pick<OptionMeta, "type" | "id" | "zoneId" | "data">;
 
 export const Option: React.FC<OptionProps> = ({ type, id, zoneId, data }) => {
-  const [progress, setProgress] = useState(0); // 1 → 0
-  const [isCooling, setIsCooling] = useState(false);
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
+  const { isCooling, progress, startCooldown } = useCooldown();
+  const elRef = useRef<HTMLDivElement>(null);
 
   if (data.hide) return null;
 
-  const handleClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = async () => {
     if (isCooling) return;
 
-    const el = e.currentTarget;
-    el.style.pointerEvents = "none";
+    const el = elRef.current;
+    if (el) el.style.pointerEvents = "none";
 
     await fetchNui("select", [type, id, zoneId]);
 
     if (data.cooldown && data.cooldown > 0) {
-      const duration = data.cooldown;
-      const startedAt = performance.now();
-
-      setIsCooling(true);
-      setProgress(1);
-
-      const tick = () => {
-        const remaining = 1 - (performance.now() - startedAt) / duration;
-
-        if (remaining <= 0) {
-          setProgress(0);
-          setIsCooling(false);
-          el.style.pointerEvents = "auto";
-          return;
-        }
-
-        setProgress(remaining);
-        rafRef.current = requestAnimationFrame(tick);
-      };
-
-      rafRef.current = requestAnimationFrame(tick);
+      startCooldown(data.cooldown, () => {
+        if (el) el.style.pointerEvents = "auto";
+      });
     } else {
-      setTimeout(() => (el.style.pointerEvents = "auto"), 100);
+      setTimeout(() => {
+        if (el) el.style.pointerEvents = "auto";
+      }, CLICK_LOCKOUT_MS);
     }
   };
 
   return (
     <div
+      ref={elRef}
       className={`option-container${isCooling ? " option-cooling" : ""}`}
       onClick={handleClick}
     >
       <i
         className={`fa-fw ${data.icon} option-icon`}
-        style={{ color: data.iconColor }}
+        style={data.iconColor ? { color: data.iconColor } : undefined}
       />
       <p className="option-label">{data.label}</p>
 
-      {isCooling && (
-        <div className="option-cooldown-bar">
-          <div
-            className="option-cooldown-fill"
-            style={{ transform: `scaleX(${progress})` }}
-          />
-        </div>
-      )}
+      {isCooling && <CooldownBar progress={progress} />}
     </div>
   );
 };
