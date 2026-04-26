@@ -54,9 +54,7 @@ client_scripts {
 
     -- Framework adapters
     'client/framework/esx.lua',
-    'client/framework/nd.lua',
     'client/framework/ox.lua',
-    'client/framework/qbx.lua',
     'client/framework/union.lua',
 
     -- Admin
