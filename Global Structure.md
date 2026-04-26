@@ -201,9 +201,7 @@ Client-side bridge between Lua and the React interface.
 ### `client/framework/`
 Framework adapters for different ecosystems:
 - ESX
-- QBX
 - OX
-- ND
 - Union
 
 ### `server/`

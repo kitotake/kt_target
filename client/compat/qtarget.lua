@@ -1,3 +1,9 @@
+-- client/compat/qtarget.lua
+-- Compatibilité qtarget → kt_target.
+-- Permet aux scripts utilisant exports['qtarget']:... de fonctionner.
+
+local api = require 'client.api'
+
 local function exportHandler(exportName, func)
     AddEventHandler(('__cfx_export_qtarget_%s'):format(exportName), function(setCB)
         setCB(func)
@@ -10,7 +16,7 @@ local function convert(options)
     local distance = options.distance
     options = options.options
 
-    -- People may pass options as a hashmap (or mixed, even)
+    -- Accepte hashmap ou tableau mixte
     for k, v in pairs(options) do
         if type(k) ~= 'number' then
             table.insert(options, v)
@@ -25,9 +31,9 @@ local function convert(options)
 
         v.onSelect = v.action
         v.distance = v.distance or distance
-        v.name = v.name or v.label
-        v.groups = v.job
-        v.items = v.item or v.required_item
+        v.name     = v.name or v.label
+        v.groups   = v.job
+        v.items    = v.item or v.required_item
 
         if v.event and v.type and v.type ~= 'client' then
             if v.type == 'server' then
@@ -35,16 +41,15 @@ local function convert(options)
             elseif v.type == 'command' then
                 v.command = v.event
             end
-
             v.event = nil
-            v.type = nil
+            v.type  = nil
         end
 
-        v.action = nil
-        v.job = nil
-        v.item = nil
+        v.action        = nil
+        v.job           = nil
+        v.item          = nil
         v.required_item = nil
-        v.qtarget = true
+        v.qtarget       = true
 
         ::continue::
     end
@@ -52,18 +57,10 @@ local function convert(options)
     return options
 end
 
-local api = require 'client.api'
-
 exportHandler('AddBoxZone', function(name, center, length, width, options, targetoptions)
     local z = center.z
-
-    if not options.minZ then
-        options.minZ = -100
-    end
-
-    if not options.maxZ then
-        options.maxZ = 800
-    end
+    if not options.minZ then options.minZ = -100 end
+    if not options.maxZ then options.maxZ = 800 end
 
     if not options.useZ then
         z = z + math.abs(options.maxZ - options.minZ) / 2
@@ -71,12 +68,12 @@ exportHandler('AddBoxZone', function(name, center, length, width, options, targe
     end
 
     return api.addBoxZone({
-        name = name,
-        coords = center,
-        size = vec3(width, length, (options.useZ or not options.maxZ) and center.z or math.abs(options.maxZ - options.minZ)),
-        debug = options.debugPoly,
+        name     = name,
+        coords   = center,
+        size     = vec3(width, length, (options.useZ or not options.maxZ) and center.z or math.abs(options.maxZ - options.minZ)),
+        debug    = options.debugPoly,
         rotation = options.heading,
-        options = convert(targetoptions),
+        options  = convert(targetoptions),
     })
 end)
 
@@ -90,20 +87,20 @@ exportHandler('AddPolyZone', function(name, points, options, targetoptions)
     end
 
     return api.addPolyZone({
-        name = name,
-        points = newPoints,
+        name      = name,
+        points    = newPoints,
         thickness = thickness,
-        debug = options.debugPoly,
-        options = convert(targetoptions),
+        debug     = options.debugPoly,
+        options   = convert(targetoptions),
     })
 end)
 
 exportHandler('AddCircleZone', function(name, center, radius, options, targetoptions)
     return api.addSphereZone({
-        name = name,
-        coords = center,
-        radius = radius,
-        debug = options.debugPoly,
+        name    = name,
+        coords  = center,
+        radius  = radius,
+        debug   = options.debugPoly,
         options = convert(targetoptions),
     })
 end)
@@ -115,12 +112,8 @@ end)
 exportHandler('AddTargetBone', function(bones, options)
     if type(bones) ~= 'table' then bones = { bones } end
     options = convert(options)
-
-    for _, v in pairs(options) do
-        v.bones = bones
-    end
-
-    exports.kt_target:addGlobalVehicle(options)
+    for _, v in pairs(options) do v.bones = bones end
+    api.addGlobalVehicle(options)
 end)
 
 exportHandler('AddTargetEntity', function(entities, options)
@@ -129,7 +122,6 @@ exportHandler('AddTargetEntity', function(entities, options)
 
     for i = 1, #entities do
         local entity = entities[i]
-
         if NetworkGetEntityIsNetworked(entity) then
             api.addEntity(NetworkGetNetworkIdFromEntity(entity), options)
         else
@@ -140,10 +132,8 @@ end)
 
 exportHandler('RemoveTargetEntity', function(entities, labels)
     if type(entities) ~= 'table' then entities = { entities } end
-
     for i = 1, #entities do
         local entity = entities[i]
-
         if NetworkGetEntityIsNetworked(entity) then
             api.removeEntity(NetworkGetNetworkIdFromEntity(entity), labels)
         else
@@ -160,34 +150,11 @@ exportHandler('RemoveTargetModel', function(models, labels)
     api.removeModel(models, labels)
 end)
 
-exportHandler('Ped', function(options)
-    api.addGlobalPed(convert(options))
-end)
-
-exportHandler('RemovePed', function(labels)
-    api.removeGlobalPed(labels)
-end)
-
-exportHandler('Vehicle', function(options)
-    api.addGlobalVehicle(convert(options))
-end)
-
-exportHandler('RemoveVehicle', function(labels)
-    api.removeGlobalVehicle(labels)
-end)
-
-exportHandler('Object', function(options)
-    api.addGlobalObject(convert(options))
-end)
-
-exportHandler('RemoveObject', function(labels)
-    api.removeGlobalObject(labels)
-end)
-
-exportHandler('Player', function(options)
-    api.addGlobalPlayer(convert(options))
-end)
-
-exportHandler('RemovePlayer', function(labels)
-    api.removeGlobalPlayer(labels)
-end)
+exportHandler('Ped',           function(options) api.addGlobalPed(convert(options))     end)
+exportHandler('RemovePed',     function(labels)  api.removeGlobalPed(labels)             end)
+exportHandler('Vehicle',       function(options) api.addGlobalVehicle(convert(options)) end)
+exportHandler('RemoveVehicle', function(labels)  api.removeGlobalVehicle(labels)         end)
+exportHandler('Object',        function(options) api.addGlobalObject(convert(options))  end)
+exportHandler('RemoveObject',  function(labels)  api.removeGlobalObject(labels)          end)
+exportHandler('Player',        function(options) api.addGlobalPlayer(convert(options))  end)
+exportHandler('RemovePlayer',  function(labels)  api.removeGlobalPlayer(labels)          end)

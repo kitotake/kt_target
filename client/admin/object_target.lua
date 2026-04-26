@@ -1,18 +1,29 @@
 -- client/admin/object_target.lua
-local kt_target      = exports.kt_target
+-- Options d'administration pour les objets du monde.
+-- ✅ Utilise require 'client.api' plutôt que exports.kt_target (évite les
+--    problèmes de timing où les exports ne sont pas encore enregistrés).
+
+local api = require 'client.api'
+
 local isMovingObject = false
 local frozenObjects  = {}
 
+-- ─── Guard admin ─────────────────────────────────────────────────────────────
+
 local function isAdmin()
     local ok, player
+
     ok, player = pcall(function() return exports['union']:GetCurrentPlayer() end)
     if not ok or not player then
         ok, player = pcall(function() return exports['union']:getPlayer() end)
     end
     if not ok or not player then return false end
+
     local group = player.group or 'user'
     return group == 'admin' or group == 'founder' or group == 'moderator'
 end
+
+-- ─── Notify ──────────────────────────────────────────────────────────────────
 
 local function notify(title, type_, duration, description)
     duration = duration or 3000
@@ -22,6 +33,8 @@ local function notify(title, type_, duration, description)
         print(('[kt_target:admin] %s — %s'):format(title, description or ''))
     end
 end
+
+-- ─── Actions ─────────────────────────────────────────────────────────────────
 
 local function showObjectInfos(data)
     local entity = data.entity
@@ -63,7 +76,10 @@ local function moveObject(data)
     if not DoesEntityExist(entity) or isMovingObject then return end
 
     isMovingObject = true
-    kt_target:disableTargeting(true)
+
+    -- ✅ Utilise l'export enregistré (pas exports.kt_target:method directement)
+    exports.kt_target:disableTargeting(true)
+
     DetachEntity(entity, false, false)
     FreezeEntityPosition(entity, true)
     SetEntityCollision(entity, false, false)
@@ -72,7 +88,6 @@ local function moveObject(data)
 
     CreateThread(function()
         while isMovingObject do
-            -- Utilise le raycast interne de kt_target si lib n'est pas dispo
             local coords, dir = GetWorldCoordFromScreenCoord(0.5, 0.5)
             local dest = coords + dir * 10.0
             local handle = StartShapeTestLosProbe(
@@ -101,7 +116,7 @@ local function moveObject(data)
                 FreezeEntityPosition(entity, false)
                 SetEntityCollision(entity, true, true)
                 isMovingObject = false
-                kt_target:disableTargeting(false)
+                exports.kt_target:disableTargeting(false)
                 notify('Objet posé', 'success', 2000)
             end
 
@@ -109,7 +124,7 @@ local function moveObject(data)
                 FreezeEntityPosition(entity, false)
                 SetEntityCollision(entity, true, true)
                 isMovingObject = false
-                kt_target:disableTargeting(false)
+                exports.kt_target:disableTargeting(false)
                 notify('Déplacement annulé', 'error', 2000)
             end
 
@@ -124,24 +139,25 @@ local function deleteObject(data)
 
     if NetworkGetEntityIsNetworked(entity) then
         local netId = NetworkGetNetworkIdFromEntity(entity)
-        -- ✅ removeEntity attend un netId, pas l'entity handle
-        kt_target:removeEntity(netId)
+        api.removeEntity(netId)
         TriggerServerEvent('admin:object:delete', netId)
     else
-        kt_target:removeLocalEntity(entity)
+        api.removeLocalEntity(entity)
         DeleteObject(entity)
     end
 
     notify('Objet supprimé', 'success', 2000)
 end
 
-kt_target:addGlobalObject({
+-- ─── Enregistrement ───────────────────────────────────────────────────────────
+
+api.addGlobalObject({
     {
         name        = 'admin:object:menu',
         icon        = 'fa-solid fa-screwdriver-wrench',
         label       = 'Admin — Objet',
         openMenu    = 'admin_object_menu',
-        canInteract = function() return isAdmin() end,
+        canInteract = isAdmin,
     },
     {
         name        = 'admin:object:infos',
@@ -149,7 +165,7 @@ kt_target:addGlobalObject({
         label       = 'Informations',
         menuName    = 'admin_object_menu',
         onSelect    = showObjectInfos,
-        canInteract = function() return isAdmin() end,
+        canInteract = isAdmin,
     },
     {
         name        = 'admin:object:freeze',
@@ -157,7 +173,7 @@ kt_target:addGlobalObject({
         label       = 'Geler / Dégeler',
         menuName    = 'admin_object_menu',
         onSelect    = toggleFreeze,
-        canInteract = function() return isAdmin() end,
+        canInteract = isAdmin,
     },
     {
         name        = 'admin:object:move',
@@ -165,7 +181,7 @@ kt_target:addGlobalObject({
         label       = 'Déplacer',
         menuName    = 'admin_object_menu',
         onSelect    = moveObject,
-        canInteract = function() return isAdmin() end,
+        canInteract = isAdmin,
     },
     {
         name        = 'admin:object:delete',
@@ -173,6 +189,6 @@ kt_target:addGlobalObject({
         label       = 'Supprimer',
         menuName    = 'admin_object_menu',
         onSelect    = deleteObject,
-        canInteract = function() return isAdmin() end,
+        canInteract = isAdmin,
     },
 })

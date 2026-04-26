@@ -3,14 +3,15 @@ fx_version 'cerulean'
 lua54 'yes'
 game 'gta5'
 
-name 'kt_target'
-author 'kitotake'
-version '1.18.0'
-repository 'https://github.com/kitotake/kt_target'
-description ''
+name        'kt_target'
+author      'kitotake'
+version     '1.18.0'
+repository  'https://github.com/kitotake/kt_target'
+description 'A performant and flexible standalone targeting resource for FiveM.'
 
 ui_page 'web/dist/index.html'
 
+-- ─── Shared (client + serveur) ────────────────────────────────────────────────
 shared_scripts {
     '@kt_lib/init.lua',
     'shared/constants.lua',
@@ -20,115 +21,71 @@ shared_scripts {
     'shared/validators.lua',
     'shared/middleware.lua',
 }
-
+ -- ─── Client ─────────────────────────────────────────────────────────────────
 client_scripts {
     'client/main.lua',
-    -- Core
+
+    -- Core (requireables)
     'client/core/loop.lua',
     'client/core/raycast.lua',
     'client/core/detection.lua',
     'client/core/resolver.lua',
     'client/core/executor.lua',
 
-    -- Registry (documentaire)
-    'client/registry/entities.lua',
-    'client/registry/globals.lua',
-    'client/registry/models.lua',
-    'client/registry/zones.lua',
-
-    -- State
+    -- State (requireable)
     'client/state/target.lua',
 
-    -- NUI
+    -- NUI (requireables)
     'client/nui/bridge.lua',
     'client/nui/focus.lua',
     'client/nui/messages.lua',
 
-    -- Utils
+    -- Utils (requireables)
+    'client/utils/init.lua',
     'client/utils/entity.lua',
     'client/utils/math.lua',
     'client/utils/table.lua',
 
-    -- API
-    'client/api/exports.lua',
+    -- Registry (requireable — contient la logique réelle)
+    'client/registry/init.lua',
 
-    -- Framework adapters
+    -- API (requireable — enregistre les exports)
+    'client/api.lua',
+
+    -- Framework adapters (requireables depuis main.lua)
     'client/framework/esx.lua',
     'client/framework/ox.lua',
     'client/framework/union.lua',
 
-    -- Admin
+    -- Admin (requireable)
     'client/admin/object_target.lua',
 
-    -- Commands
-    'client/commands/target.lua',
+    -- Defaults (requireable)
+    'client/defaults.lua',
 
-    -- Compat
+    -- Compat (requireable)
     'client/compat/qtarget.lua',
 
-    -- Debug
+    -- Commands (top-level, guard interne par convar)
+    'client/commands/target.lua',
+
+    -- Debug (top-level, guard interne par convar)
     'client/debug/debug.lua',
 }
 
+-- ─── Serveur ─────────────────────────────────────────────────────────────────
 server_scripts {
     'server/main.lua',
 }
 
+-- ─── Fichiers statiques (NUI + locales) ──────────────────────────────────────
 files {
     'web/dist/index.html',
     'web/dist/assets/*.js',
     'web/dist/assets/*.css',
     'locales/*.json',
-
-    -- Core
-    'client/core/loop.lua',
-    'client/core/raycast.lua',
-    'client/core/detection.lua',
-    'client/core/resolver.lua',
-    'client/core/executor.lua',
-
-    -- Registry (documentaire)
-    'client/registry/entities.lua',
-    'client/registry/globals.lua',
-    'client/registry/models.lua',
-    'client/registry/zones.lua',
-
-    -- State
-    'client/state/target.lua',
-
-    -- NUI
-    'client/nui/bridge.lua',
-    'client/nui/focus.lua',
-    'client/nui/messages.lua',
-
-    -- Utils
-    'client/utils/entity.lua',
-    'client/utils/math.lua',
-    'client/utils/table.lua',
-
-    -- API
-    'client/api/exports.lua',
-
-    -- Framework adapters
-    'client/framework/esx.lua',
-    'client/framework/nd.lua',
-    'client/framework/ox.lua',
-    'client/framework/qbx.lua',
-    'client/framework/union.lua',
-
-    -- Admin
-    'client/admin/object_target.lua',
-
-    -- Commands
-    'client/commands/target.lua',
-
-    -- Compat
-    'client/compat/qtarget.lua',
-
-    -- Debug
-    'client/debug/debug.lua',
 }
 
-provide 'qtarget'
-
+-- ─── Méta ────────────────────────────────────────────────────────────────────
+provide   'qtarget'
 dependency 'kt_lib'
