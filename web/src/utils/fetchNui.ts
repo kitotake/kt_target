@@ -1,9 +1,16 @@
-import { RESOURCE_NAME } from "../config";
+import { IS_CFX_NUI, RESOURCE_NAME } from "../config";
 
 export async function fetchNui<T = unknown>(
   eventName: string,
   data?: unknown
 ): Promise<T> {
+  if (!IS_CFX_NUI) {
+    console.debug(
+      `[fetchNui] Skipping "${eventName}" call outside FiveM NUI runtime.`
+    );
+    return {} as T;
+  }
+
   try {
     const resp = await fetch(`https://${RESOURCE_NAME}/${eventName}`, {
       method: "POST",

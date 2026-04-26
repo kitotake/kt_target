@@ -1,7 +1,14 @@
 // ─── Resource name (FiveM NUI) ────────────────────────────────────────────────
 
-export const RESOURCE_NAME =
-  (window as any).GetParentResourceName?.() ?? "kt_target";
+type NuiWindow = Window & {
+  GetParentResourceName?: () => string;
+  invokeNative?: unknown;
+};
+
+const nuiWindow = window as NuiWindow;
+
+export const RESOURCE_NAME = nuiWindow.GetParentResourceName?.() ?? "kt_target";
+export const IS_CFX_NUI = typeof nuiWindow.invokeNative !== "undefined";
 
 // ─── Default labels ───────────────────────────────────────────────────────────
 
