@@ -295,7 +295,9 @@ p {
     }
 
     .checkbox-card__icon {
+      width: 16pt;
       color: var(--color-accent);
+      font-size: 16pt;
     }
   }
 
@@ -324,4 +326,36 @@ p {
   &__description {
     font-family: var(--font-main);
   }
+}
+
+// ─── Check Style (comme ox_target / qtarget) ───────────────────────────────
+
+.option-container {
+  position: relative;           /* Important pour positionner le check */
+  padding-right: 32pt;          /* Espace à droite pour le check */
+}
+
+.option-check {
+  position: absolute;
+  right: 10pt;                  /* ← Ajuste cette valeur pour déplacer horizontalement */
+  top: 50%;
+  transform: translateY(-50%);
+
+  font-size: 19pt;              /* ← Taille du check (baisse pour plus petit) */
+  line-height: 1;
+  color: #ffffff;
+  font-weight: 900;
+  opacity: 0.95;
+
+  text-shadow: 
+    0 2px 4px rgba(231, 30, 30, 0.9),
+    1px 1px 0 rgba(189, 37, 37, 0.7);
+
+  pointer-events: none;
+}
+
+/* Optionnel : rendre le check un peu plus petit et discret */
+.option-check.small {
+  font-size: 16pt;
+  right: 12pt;
 }
