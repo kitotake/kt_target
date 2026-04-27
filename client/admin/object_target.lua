@@ -1,7 +1,5 @@
 -- client/admin/object_target.lua
 -- Options d'administration pour les objets du monde.
--- ✅ Utilise require 'client.api' plutôt que exports.kt_target (évite les
---    problèmes de timing où les exports ne sont pas encore enregistrés).
 
 local api = require 'client.api'
 
@@ -28,13 +26,18 @@ end
 local function notify(title, type_, duration, description)
     duration = duration or 3000
     if lib and lib.notify then
-        lib.notify({ title = title, description = description, type = type_, duration = duration })
+        lib.notify({
+            title       = title,
+            description = description,
+            type        = type_,
+            duration    = duration,
+        })
     else
         print(('[kt_target:admin] %s — %s'):format(title, description or ''))
     end
 end
 
--- ─── Actions ─────────────────────────────────────────────────────────────────
+-- ─── Actions admin ───────────────────────────────────────────────────────────
 
 local function showObjectInfos(data)
     local entity = data.entity
@@ -67,8 +70,11 @@ local function toggleFreeze(data)
     FreezeEntityPosition(entity, not wasFrozen)
     frozenObjects[entity] = not wasFrozen or nil
 
-    notify(not wasFrozen and 'Objet Gelé' or 'Objet Dégelé',
-           not wasFrozen and 'warning' or 'success', 3000)
+    notify(
+        not wasFrozen and 'Objet Gelé' or 'Objet Dégelé',
+        not wasFrozen and 'warning' or 'success',
+        3000
+    )
 end
 
 local function moveObject(data)
@@ -76,8 +82,6 @@ local function moveObject(data)
     if not DoesEntityExist(entity) or isMovingObject then return end
 
     isMovingObject = true
-
-    -- ✅ Utilise l'export enregistré (pas exports.kt_target:method directement)
     exports.kt_target:disableTargeting(true)
 
     DetachEntity(entity, false, false)
@@ -103,7 +107,9 @@ local function moveObject(data)
             until retval ~= 1
 
             if hit == 1 and endCoords then
-                SetEntityCoords(entity, endCoords.x, endCoords.y, endCoords.z, false, false, false, false)
+                SetEntityCoords(entity,
+                    endCoords.x, endCoords.y, endCoords.z,
+                    false, false, false, false)
             end
 
             if IsControlPressed(0, 44) then
@@ -149,20 +155,97 @@ local function deleteObject(data)
     notify('Objet supprimé', 'success', 2000)
 end
 
--- ─── Enregistrement ───────────────────────────────────────────────────────────
+-- ─── Targets de test ─────────────────────────────────────────────────────────
 
+-- Test 1 : Tous les peds
+api.addGlobalPed({
+    {
+        name     = 'test:ped:wave',
+        icon     = 'fa-solid fa-hand-wave',
+        label    = 'Dire bonjour',
+        onSelect = function(data)
+            notify('Ped', 'success', 2000, 'Tu as salué le ped #' .. tostring(data.entity))
+        end,
+    },
+    {
+        name     = 'test:ped:info',
+        icon     = 'fa-solid fa-circle-info',
+        label    = 'Infos ped',
+        onSelect = function(data)
+            local entity  = data.entity
+            local coords  = GetEntityCoords(entity)
+            local model   = GetEntityArchetypeName(entity)
+            notify('Ped Info', 'info', 5000,
+                ('Model: %s\nCoords: %.1f, %.1f, %.1f'):format(
+                    model, coords.x, coords.y, coords.z))
+        end,
+    },
+})
+
+-- Test 2 : Tous les véhicules
+api.addGlobalVehicle({
+    {
+        name     = 'test:vehicle:info',
+        icon     = 'fa-solid fa-car',
+        label    = 'Infos véhicule',
+        onSelect = function(data)
+            local entity = data.entity
+            local model  = GetEntityArchetypeName(entity)
+            local plate  = GetVehicleNumberPlateText(entity)
+            local speed  = math.floor(GetEntitySpeed(entity) * 3.6)
+            notify('Véhicule', 'info', 5000,
+                ('Model: %s\nPlaque: %s\nVitesse: %d km/h'):format(model, plate, speed))
+        end,
+    },
+    {
+        name     = 'test:vehicle:repair',
+        icon     = 'fa-solid fa-wrench',
+        label    = 'Réparer',
+        onSelect = function(data)
+            SetVehicleFixed(data.entity)
+            SetVehicleDeformationFixed(data.entity)
+            notify('Véhicule', 'success', 2000, 'Véhicule réparé !')
+        end,
+    },
+    {
+        name     = 'test:vehicle:flip',
+        icon     = 'fa-solid fa-rotate',
+        label    = 'Remettre à l\'endroit',
+        onSelect = function(data)
+            local entity  = data.entity
+            local coords  = GetEntityCoords(entity)
+            local heading = GetEntityHeading(entity)
+            SetEntityCoords(entity, coords.x, coords.y, coords.z + 1.0, false, false, false, false)
+            SetEntityHeading(entity, heading)
+            SetEntityRotation(entity, 0.0, 0.0, heading, 2, true)
+            notify('Véhicule', 'success', 2000, 'Véhicule remis à l\'endroit !')
+        end,
+    },
+})
+
+-- Test 3 : Tous les objets (+ admin si admin)
 api.addGlobalObject({
+    -- Options visibles par tous
+    {
+        name     = 'test:object:info',
+        icon     = 'fa-solid fa-cube',
+        label    = 'Infos objet',
+        onSelect = function(data)
+            showObjectInfos(data)
+        end,
+    },
+    -- Options admin uniquement
     {
         name        = 'admin:object:menu',
         icon        = 'fa-solid fa-screwdriver-wrench',
-        label       = 'Admin — Objet',
+        label       = 'Admin — Menu objet',
         openMenu    = 'admin_object_menu',
         canInteract = isAdmin,
     },
     {
         name        = 'admin:object:infos',
         icon        = 'fa-solid fa-circle-info',
-        label       = 'Informations',
+        label       = 'Informations (admin)',
         menuName    = 'admin_object_menu',
         onSelect    = showObjectInfos,
         canInteract = isAdmin,
@@ -192,3 +275,66 @@ api.addGlobalObject({
         canInteract = isAdmin,
     },
 })
+
+-- Test 4 : Tous les joueurs
+api.addGlobalPlayer({
+    {
+        name     = 'test:player:info',
+        icon     = 'fa-solid fa-user',
+        label    = 'Infos joueur',
+        onSelect = function(data)
+            local entity = data.entity
+            local netId  = NetworkGetNetworkIdFromEntity(entity)
+            local coords = GetEntityCoords(entity)
+            notify('Joueur', 'info', 5000,
+                ('NetId: %d\nCoords: %.1f, %.1f, %.1f'):format(
+                    netId, coords.x, coords.y, coords.z))
+        end,
+    },
+    {
+        name        = 'admin:player:kick',
+        icon        = 'fa-solid fa-ban',
+        label       = 'Kick (admin)',
+        canInteract = isAdmin,
+        onSelect    = function(data)
+            local entity = data.entity
+            local netId  = NetworkGetNetworkIdFromEntity(entity)
+            TriggerServerEvent('admin:player:kick', netId)
+            notify('Admin', 'warning', 3000, 'Kick envoyé pour netId ' .. tostring(netId))
+        end,
+    },
+})
+
+-- Test 5 : Zone de test (BoxZone autour des coordonnées 0,0,0 — à adapter)
+-- Décommente et adapte les coords à ton serveur
+--[[
+api.addBoxZone({
+    name    = 'test:zone:spawn',
+    coords  = vector3(0.0, 0.0, 70.0),
+    size    = vector3(5.0, 5.0, 3.0),
+    options = {
+        {
+            name     = 'test:zone:heal',
+            icon     = 'fa-solid fa-heart-pulse',
+            label    = 'Se soigner',
+            onSelect = function()
+                local ped = cache.ped
+                SetEntityHealth(ped, 200)
+                notify('Zone', 'success', 2000, 'Vous avez été soigné !')
+            end,
+        },
+        {
+            name     = 'test:zone:weather',
+            icon     = 'fa-solid fa-cloud-sun',
+            label    = 'Changer météo',
+            onSelect = function()
+                SetWeatherTypePersist('EXTRASUNNY')
+                SetWeatherTypeNow('EXTRASUNNY')
+                notify('Zone', 'success', 2000, 'Météo ensoleillée !')
+            end,
+        },
+    },
+})
+]]
+
+print('[kt_target] client/admin/object_target.lua chargé')

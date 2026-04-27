@@ -34,6 +34,7 @@ client_scripts {
 
     -- State (requireable)
     'client/state/target.lua',
+    'client/state.lua',
 
     -- NUI (requireables)
     'client/nui/bridge.lua',
@@ -45,6 +46,7 @@ client_scripts {
     'client/utils/entity.lua',
     'client/utils/math.lua',
     'client/utils/table.lua',
+    'client/utils.lua',
 
     -- Registry (requireable — contient la logique réelle)
     'client/registry/init.lua',
@@ -56,6 +58,7 @@ client_scripts {
     'client/framework/esx.lua',
     'client/framework/union.lua',
 
+    
     -- Admin (requireable)
     'client/admin/object_target.lua',
 
@@ -68,7 +71,8 @@ client_scripts {
     -- Commands (top-level, guard interne par convar)
     'client/commands/target.lua',
 
-    -- Debug (top-level, guard interne par convar)
+   -- Debug (top-level, guard interne par convar)
+    'client/debug.lua',
     'client/debug/init.lua',
 }
 

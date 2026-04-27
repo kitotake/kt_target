@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import type { NuiEvent, OptionMeta } from "../../typings";
 import { setEyeHover, parseOptions } from "../../utils";
-import { DEFAULT_NO_OPTIONS_LABEL } from "../../config";
 
 type TargetStore = {
   visible: boolean;
@@ -17,6 +16,7 @@ export function useTargetStore(): TargetStore {
 
   const reset = useCallback(() => {
     setEyeHover(false);
+    setVisible(false);
     setOptionsMeta([]);
     setNoOptions(null);
   }, []);
@@ -29,28 +29,31 @@ export function useTargetStore(): TargetStore {
         case "visible": {
           const isVisible = !!data.state;
           setVisible(isVisible);
-
+          setEyeHover(isVisible);
           if (!isVisible) reset();
           break;
         }
 
         case "leftTarget": {
-          reset();
+          // Garde le body visible (ALT encore maintenu)
+          // mais vide les options
+          setEyeHover(true);
+          setOptionsMeta([]);
+          setNoOptions(null);
           break;
         }
 
         case "setTarget": {
+          setVisible(true);
           setEyeHover(true);
 
-          const { meta, totalVisible } = parseOptions(data);
+          const { meta } = parseOptions(data);
 
           setOptionsMeta(meta);
-          setNoOptions(
-            totalVisible === 0
-              ? data.noOptionsLabel ?? DEFAULT_NO_OPTIONS_LABEL
-              : null
-          );
 
+          // noOptionsLabel est envoyé par le Lua uniquement si des options
+          // existent mais sont toutes cachées (canInteract / groups / items)
+          setNoOptions(data.noOptionsLabel ?? null);
           break;
         }
       }

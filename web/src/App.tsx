@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
-import { Option, NoOptions } from "./components";
 import { useNuiMessage, useVisibility } from "./hooks";
 import { useTargetStore } from "./features/target";
+import { TargetMenu } from "./components/TargetMenu";
 import type { NuiEvent } from "./typings";
 
 export const App: React.FC = () => {
@@ -17,18 +17,10 @@ export const App: React.FC = () => {
   useNuiMessage(handler);
 
   return (
-    <>
-      {optionsMeta.map((meta) => (
-        <Option
-          key={meta.key}
-          groupIndex={meta.groupIndex}
-          optionIndex={meta.optionIndex}
-          zoneId={meta.zoneId}
-          data={meta.data}
-        />
-      ))}
-      {noOptions && <NoOptions label={noOptions} />}
-    </>
+    <TargetMenu
+      options={optionsMeta}
+      noOptions={noOptions}
+    />
   );
 };
 

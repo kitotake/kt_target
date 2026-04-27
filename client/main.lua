@@ -1,228 +1,365 @@
 -- client/main.lua
--- Point d'entrée client. Charge les modules dans le bon ordre
--- et démarre la boucle principale de ciblage.
-
 if not lib.checkDependency('kt_lib', '3.30.0', true) then return end
 
 lib.locale()
 
--- ─── Chargement des modules (ordre important — pas de circular dep) ───────────
-
-local utils   = require 'client.utils'       -- utils/init.lua (pas de dep sur api)
-local state   = require 'client.state.target'
-local bridge  = require 'client.nui.bridge'
-local focus   = require 'client.nui.focus'
+-- ─── Modules ─────────────────────────────────────────────────────────────────
+local utils = require 'client.utils'
+local state = require 'client.state.target'
+local bridge = require 'client.nui.bridge'
+local focus = require 'client.nui.focus'
 local raycast = require 'client.core.raycast'
-local detect  = require 'client.core.detection'
+local detect = require 'client.core.detection'
 local resolve = require 'client.core.resolver'
-local exec    = require 'client.core.executor'
+local exec = require 'client.core.executor'
+local api = require 'client.api'
 
--- L'API charge le registre — doit venir APRÈS utils et state
-local api     = require 'client.api'
-
--- Modules optionnels (chargés après l'API pour qu'ils puissent l'utiliser)
 require 'client.debug'
 require 'client.defaults'
 require 'client.compat.qtarget'
 
--- ─── État interne de la boucle ────────────────────────────────────────────────
-
-local _running  = false
+-- ─── État ────────────────────────────────────────────────────────────────────
+local _running = false
 local _disabled = false
+local _altActive = false
+local _lastGroupList = {}
 
--- ─── Filtre de visibilité ─────────────────────────────────────────────────────
+-- ─── Constantes ──────────────────────────────────────────────────────────────
+local HOTKEY = 19 -- INPUT_CHARACTER_WHEEL (ALT)
+local DOT_THRESHOLD = Config.dotThreshold or 0.92
 
----Détermine si une option doit être masquée pour l'entité ciblée.
----@param opt          KtTargetOption
----@param dist         number
----@param endCoords    vector3
----@param entityHit    number
----@param entityType   number
----@param entityModel  number|false
----@return boolean  true = masquer
+print('[kt_target] Client script loaded.')
+print('dot threshold:', DOT_THRESHOLD)
+
+-- ─── Helpers ─────────────────────────────────────────────────────────────────
+
+--- Convertit une valeur en number de manière sécurisée
+local function toNumber(value)
+    if type(value) == 'number' then 
+        return value 
+    end
+    if type(value) == 'string' then
+        local n = tonumber(value)
+        if n then return n end
+    end
+    return nil
+end
+
+--- Vérifie que le joueur regarde bien vers l'entité (dot product)
+---@param entityCoords vector3
+---@return boolean
+local function isLookingAt(entityCoords)
+    local camCoords = GetGameplayCamCoords()
+    local camRot = GetGameplayCamRot(2)  -- renamed for clarity
+
+    local x = math.rad(camRot.x)
+    local z = math.rad(camRot.z)
+
+    -- Direction vector from camera (forward)
+    local dir = vector3(
+        -math.sin(z) * math.abs(math.cos(x)),
+        math.cos(z) * math.abs(math.cos(x)),
+        math.sin(x)
+    )
+
+    local toEntity = entityCoords - camCoords
+    local len = #toEntity
+    if len < 0.001 then 
+        return false 
+    end
+
+    -- Proper dot product (normalized)
+    local normalized = toEntity / len
+   local dot = normalized.x * dir.x + normalized.y * dir.y + normalized.z * dir.z
+if not dot or dot ~= dot then  -- NaN check
+    return false
+end
+return dot >= DOT_THRESHOLD
+end
+
+--- Ferme proprement le targeting
+local function closeTarget()
+    if focus.isFocused() then
+        focus.set(false)
+    end
+    bridge.send({event = 'leftTarget'})
+    bridge.setVisible(false)
+    state.reset()
+    _altActive = false
+    _lastGroupList = {}
+end
+
+-- ─── Filtre de visibilité ────────────────────────────────────────────────────
 local function shouldHide(opt, dist, endCoords, entityHit, entityType, entityModel)
-    -- Distance
-    if opt.distance and dist > opt.distance then return true end
-
-    -- canInteract personnalisé
+    local maxDist = toNumber(opt.distance)
+    
+    if maxDist and dist > maxDist then
+        return true
+    end
+    
     if opt.canInteract then
         local ok, result = pcall(opt.canInteract, entityHit, dist, endCoords, opt.name)
-        if not ok or not result then return true end
+        if not ok or not result then
+            return true
+        end
     end
-
-    -- Filtre par groupe / job
-    if opt.groups then
-        if not utils.hasPlayerGotGroup(opt.groups) then return true end
+    
+    if opt.groups and not utils.hasPlayerGotGroup(opt.groups) then
+        return true
     end
-
-    -- Filtre par item
-    if opt.items then
-        if not utils.hasPlayerGotItem(opt.items, opt.anyItem) then return true end
+    
+    if opt.items and not utils.hasPlayerGotItem(opt.items, opt.anyItem) then
+        return true
     end
-
+    
     return false
 end
 
--- ─── Sérialisation NUI ───────────────────────────────────────────────────────
+--- Nettoie toutes les options (convertit distance en number)
+local function sanitizeOptions(optionsGroups)
+    for _, opts in pairs(optionsGroups or {}) do
+        for _, opt in ipairs(opts) do
+            if opt.distance then
+                opt.distance = toNumber(opt.distance)
+            end
+        end
+    end
+end
 
----Convertit optionsGroups en payload NUI.
----Filtre les options masquées, ne transmet que les champs nécessaires au React.
----@param optionsGroups table<string, KtTargetOption[]>
----@param nearbyZones   table
----@return table groups, table zones
+-- ─── Sérialisation NUI ───────────────────────────────────────────────────────
 local function buildNuiPayload(optionsGroups, nearbyZones)
     local groups = {}
-
+    _lastGroupList = {}
+    
     for key, opts in pairs(optionsGroups) do
+        _lastGroupList[#_lastGroupList + 1] = {key = key, options = opts}
+    end
+    
+    for _, grp in ipairs(_lastGroupList) do
         local serialized = {}
-        for _, opt in ipairs(opts) do
+        for _, opt in ipairs(grp.options) do
             serialized[#serialized + 1] = {
-                label     = opt.label,
-                icon      = opt.icon or 'fa-solid fa-hand-pointer',
+                label = opt.label,
+                icon = opt.icon or 'fa-solid fa-hand-pointer',
                 iconColor = opt.iconColor,
-                hide      = opt.hide,
-                cooldown  = opt.cooldown,
-                name      = opt.name,
-                openMenu  = opt.openMenu,
-                menuName  = opt.menuName,
+                hide = opt.hide,
+                cooldown = opt.cooldown,
+                name = opt.name,
+                openMenu = opt.openMenu,
+                menuName = opt.menuName,
             }
         end
         if #serialized > 0 then
-            groups[#groups + 1] = { key = key, options = serialized }
+            groups[#groups + 1] = {key = grp.key, options = serialized}
         end
     end
-
+    
     local zones = {}
     if nearbyZones then
         for i, zone in ipairs(nearbyZones) do
             local serialized = {}
             for _, opt in ipairs(zone.options or {}) do
                 serialized[#serialized + 1] = {
-                    label     = opt.label,
-                    icon      = opt.icon or 'fa-solid fa-map-pin',
+                    label = opt.label,
+                    icon = opt.icon or 'fa-solid fa-map-pin',
                     iconColor = opt.iconColor,
-                    hide      = opt.hide,
-                    cooldown  = opt.cooldown,
-                    name      = opt.name,
+                    hide = opt.hide,
+                    cooldown = opt.cooldown,
+                    name = opt.name,
                 }
             end
             if #serialized > 0 then
-                zones[#zones + 1] = { zoneId = i, options = serialized }
+                zones[#zones + 1] = {zoneId = i, options = serialized}
             end
         end
     end
-
+    
     return groups, zones
 end
 
--- ─── Boucle principale ────────────────────────────────────────────────────────
+-- ─── Thread : gestion hotkey ─────────────────────────────────────────────────
+CreateThread(function()
+    while true do
+        Wait(0)
+        
+        if not _disabled then
+            if Config.toggleHotkey then
+                if IsControlJustPressed(0, HOTKEY) then
+                    if not _altActive then
+                        _altActive = true
+                        bridge.setVisible(true)
+                    else
+                        closeTarget()
+                    end
+                end
+            else
+                local pressed = IsControlPressed(0, HOTKEY)
+                if pressed and not _altActive then
+                    _altActive = true
+                    bridge.setVisible(true)
+                elseif not pressed and _altActive then
+                    closeTarget()
+                end
+            end
+        end
+    end
+end)
 
+-- ─── Boucle principale ───────────────────────────────────────────────────────
 CreateThread(function()
     _running = true
+    
+    local _lastEntityHit = 0
+    local _lastVisible = false
+
+    -- Sécurisation des configs au démarrage
+    Config.maxDistance = toNumber(Config.maxDistance) or 5.0
+    Config.zoneDistance = toNumber(Config.zoneDistance) or 10.0
 
     while _running do
-        local sleeping = true
-
-        if not _disabled then
-            local ped    = cache.ped
+        
+        if not _disabled and _altActive then
+            
+            local ped = cache.ped
             local coords = GetEntityCoords(ped)
-
-            -- 1. Raycast depuis la caméra
+            
             local hit, entityHit, endCoords = raycast.fromCamera(
                 RAYCAST_FLAG_ALL, ped, Config.maxDistance
             )
-
+            
             local dist = hit and #(coords - endCoords) or Config.maxDistance
+            dist = toNumber(dist) or Config.maxDistance
 
-            -- 2. Détection zones (kt_lib)
+            -- Validation regard (dot product)
+            local entityValid = false
+            if hit and detect.isValid(entityHit) then
+                local ec = GetEntityCoords(entityHit)
+                entityValid = isLookingAt(ec)
+            end
+            
+            -- Zones proches
             local nearbyZones = {}
-            if lib.zones then
-                for _, zone in ipairs(lib.zones.getNearby and lib.zones.getNearby(coords, Config.zoneDistance) or {}) do
+            if lib.zones and lib.zones.getNearby then
+                for _, zone in ipairs(lib.zones.getNearby(coords, Config.zoneDistance) or {}) do
                     if zone.options then
                         nearbyZones[#nearbyZones + 1] = zone
                     end
                 end
             end
-
-            local hasEntity = hit and detect.isValid(entityHit)
-            local hasZones  = #nearbyZones > 0
-
+            
+            local hasEntity = entityValid
+            local hasZones = #nearbyZones > 0
+            
             if hasEntity or hasZones then
-                sleeping = false
-
-                local entityType  = hasEntity and detect.getType(entityHit) or 0
+                
+                local entityType = hasEntity and detect.getType(entityHit) or 0
                 local entityModel = hasEntity and detect.getModel(entityHit) or false
-
+                
                 if hasEntity then
                     state.set(entityHit, endCoords, dist)
                 end
-
-                -- 3. Agrégation des options
+                
                 local optionsGroups = hasEntity
                     and api.getTargetOptions(entityHit, entityType, entityModel)
                     or {}
 
-                -- 4. Mise à jour de la visibilité
+                -- Nettoyage important des distances
+                sanitizeOptions(optionsGroups)
+                
+                -- Mise à jour visibilité
                 local changed = false
+                local totalVisible = 0
+                
                 for _, opts in pairs(optionsGroups) do
                     if resolve.updateVisibility(
                         opts, dist, endCoords, shouldHide,
                         entityHit, entityType, entityModel
-                    ) then
-                        changed = true
+                    ) then 
+                        changed = true 
+                    end
+                    
+                    for _, opt in ipairs(opts) do
+                        if not opt.hide then 
+                            totalVisible = totalVisible + 1 
+                        end
                     end
                 end
-
-                -- Visibilité des zones
+                
                 for _, zone in ipairs(nearbyZones) do
                     if resolve.updateVisibility(
                         zone.options, dist, endCoords, shouldHide,
                         0, 0, false
-                    ) then
-                        changed = true
+                    ) then 
+                        changed = true 
+                    end
+                    
+                    for _, opt in ipairs(zone.options or {}) do
+                        if not opt.hide then 
+                            totalVisible = totalVisible + 1 
+                        end
                     end
                 end
-
-                -- 5. Envoi NUI si changement
-                if changed or not focus.isFocused() then
+                
+                -- Envoi NUI seulement si changement
+                local entityChanged = entityHit ~= _lastEntityHit
+                if changed or entityChanged or not _lastVisible then
                     local groups, zones = buildNuiPayload(optionsGroups, nearbyZones)
-                    bridge.setTarget(groups, zones)
+                    local hasAnyGroups = #groups > 0 or #zones > 0
+                    
+                    bridge.send({
+                        event = 'setTarget',
+                        groups = groups,
+                        zones = zones,
+                        noOptionsLabel = (hasAnyGroups and totalVisible == 0)
+                            and locale('no_options')
+                            or nil,
+                    })
+                    
+                    _lastVisible = true
                 end
-
+                
+                _lastEntityHit = entityHit
+                
                 if not focus.isFocused() then
                     focus.set(true, true)
                 end
+            
             else
-                if focus.isFocused() then
-                    focus.set(false)
-                    bridge.leftTarget()
+                -- Aucune cible valide
+                if _lastVisible then
+                    if focus.isFocused() then focus.set(false) end
+                    bridge.send({event = 'leftTarget'})
                     state.reset()
+                    _lastEntityHit = 0
+                    _lastVisible = false
                 end
             end
+            
+            Wait(0)
+        else
+            _lastEntityHit = 0
+            _lastVisible = false
+            Wait(100)
         end
-
-        Wait(sleeping and 100 or 0)
     end
 end)
 
--- ─── NUI Callbacks ────────────────────────────────────────────────────────────
-
+-- ─── NUI Callbacks ───────────────────────────────────────────────────────────
 RegisterNUICallback('select', function(data, cb)
-    print('Option sélectionnée :', json.encode(data))
-    -- data = [groupIndex, optionIndex, zoneId?] (1-based, depuis React)
-    local groupIndex  = data[1]
+    local groupIndex = data[1]
     local optionIndex = data[2]
-    local zoneId      = data[3]
-
+    local zoneId = data[3]
+    local isZone = zoneId ~= nil and zoneId ~= 0
+    
     local currentState = state.get()
     local option
-
-    if zoneId then
-        -- Option de zone
+    
+    if isZone then
         local nearbyZones = {}
         if lib.zones and lib.zones.getNearby then
-            local coords = GetEntityCoords(cache.ped)
-            nearbyZones = lib.zones.getNearby(coords, Config.zoneDistance) or {}
+            nearbyZones = lib.zones.getNearby(
+                GetEntityCoords(cache.ped), Config.zoneDistance
+            ) or {}
         end
         local zone = nearbyZones[zoneId]
         if zone and zone.options then
@@ -230,43 +367,28 @@ RegisterNUICallback('select', function(data, cb)
         end
         state.setZone(zoneId)
     else
-        -- Option d'entité : reconstruit les groupes pour retrouver l'option
-        local etype  = detect.getType(currentState.entity)
-        local emodel = detect.getModel(currentState.entity)
-        local groups = api.getTargetOptions(currentState.entity, etype, emodel)
-
-        -- Convertit la table pairs() en tableau ordonné
-        local groupList = {}
-        for key, opts in pairs(groups) do
-            groupList[#groupList + 1] = { key = key, options = opts }
-        end
-
-        local group = groupList[groupIndex]
+        local group = _lastGroupList[groupIndex]
         if group then
             option = group.options[optionIndex]
         end
     end
-
+    
     if not option then
-        warn('[kt_target] select : option introuvable (groupIndex=' ..
-            tostring(groupIndex) .. ', optionIndex=' .. tostring(optionIndex) .. ')')
+        warn(('[kt_target] select : option introuvable (g=%s o=%s z=%s)'):format(
+            tostring(groupIndex), tostring(optionIndex), tostring(zoneId)
+        ))
         cb('error')
         return
     end
-
-    -- Exécution de l'action
+    
     exec.run(option, currentState)
     cb('ok')
 end)
 
--- ─── Exports de contrôle ─────────────────────────────────────────────────────
-
+-- ─── Exports ─────────────────────────────────────────────────────────────────
 exports('disableTargeting', function(value)
     _disabled = value
-    if value then
-        focus.set(false)
-        bridge.leftTarget()
-    end
+    if value then closeTarget() end
 end)
 
 exports('isActive', function()

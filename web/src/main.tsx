@@ -1,8 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-// ✅ On n'importe plus Mantine du tout — aucun composant Mantine
-// n'est utilisé dans l'UI finale (l'UI est du pur HTML + SCSS).
-// Garder MantineProvider causait des conflits de reset CSS.
+import { MantineProvider } from "@mantine/core";
+
 import "./styles/main.scss";
 import App from "./App";
 
@@ -15,7 +14,9 @@ const mount = () => {
 
   createRoot(container).render(
     <StrictMode>
-      <App />
+      <MantineProvider >
+        <App />
+      </MantineProvider>
     </StrictMode>
   );
 };

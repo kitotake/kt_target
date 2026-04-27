@@ -14,6 +14,8 @@ Config.zoneDistance = 7.0
 --- Activer la ligne de vue (LoS) pour les entités non-map.
 Config.requireLoS = true
 
+Config.dotThreshold = 0.92
+
 --- Touches : true = toggle (appui/relâche), false = maintien
 Config.toggleHotkey = GetConvarInt('kt_target:toggleHotkey', 0) == 1
 

@@ -3,7 +3,7 @@ import { fetchNui } from "../utils";
 import { useCooldown } from "../hooks";
 import { CLICK_LOCKOUT_MS } from "../config";
 import { CooldownBar } from "./CooldownBar";
-import type { OptionMeta, SelectPayload } from "../typings";
+import type { OptionMeta } from "../typings";
 
 type OptionProps = Pick<OptionMeta, "groupIndex" | "optionIndex" | "zoneId" | "data">;
 
@@ -20,13 +20,11 @@ export const Option: React.FC<OptionProps> = ({ groupIndex, optionIndex, zoneId,
     if (el) el.style.pointerEvents = "none";
     let unlockHandledByCooldown = false;
 
-    // ✅ Correction : on envoie [groupIndex, optionIndex, zoneId?]
-    // Ces valeurs sont 1-based et correspondent exactement aux indices Lua.
-    // - option d'entité : [groupIndex, optionIndex, undefined]
-    // - option de zone  : [undefined,  optionIndex, zoneId]
-    const payload: SelectPayload = zoneId !== undefined
-      ? [undefined, optionIndex, zoneId]
-      : [groupIndex!, optionIndex, undefined];
+    // 0 = sentinel côté Lua pour "absent"
+    const payload = zoneId !== undefined
+      ? [0, optionIndex, zoneId]
+      : [groupIndex ?? 0, optionIndex, 0];
+
     try {
       await fetchNui("select", payload);
       if (data.cooldown && data.cooldown > 0) {

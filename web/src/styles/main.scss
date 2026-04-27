@@ -3,20 +3,20 @@
 // ─── Variables ───────────────────────────────────────────────────────────────
 
 :root {
-  --color-default: #cfd2da;
-  --color-hover: #ffffff;
-  --color-accent: #ffb775;
+  --color-default:      #cfd2da;
+  --color-hover:        #ffffff;
+  --color-accent:       #ffb775;
   --color-icon-default: #000000;
 
-  --bg-option: rgba(12, 12, 16, 0.72);
+  --bg-option:      rgba(12, 12, 16, 0.72);
   --bg-option-hover: rgba(22, 22, 30, 0.82);
-  --bg-fade-stop: rgba(12, 12, 16, 0);
+  --bg-fade-stop:   rgba(12, 12, 16, 0);
 
   --font-main: "Nunito", sans-serif;
 
   --transition-speed: 220ms;
-  --option-height: 28pt;
-  --option-width: 160pt;
+  --option-height:    28pt;
+  --option-width:     160pt;
 }
 
 // ─── Reset ───────────────────────────────────────────────────────────────────
@@ -32,7 +32,6 @@ body {
   overflow: hidden;
   user-select: none;
   white-space: nowrap;
-  // NUI hidden par défaut — affiché/masqué via JS (useVisibility)
   visibility: hidden;
   background: transparent;
 }
@@ -41,35 +40,39 @@ p {
   margin: 0;
 }
 
+// ─── Animation ───────────────────────────────────────────────────────────────
+// Déclarée en premier pour être disponible partout
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6pt);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 // ─── Œil (crosshair) ─────────────────────────────────────────────────────────
-// Centré à l'écran, indépendant du options-wrapper.
-// Utilise fill="currentColor" dans l'SVG de index.html.
 
 #eye {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  // ✅ color contrôle fill="currentColor" du SVG inline
   color: var(--color-icon-default);
-  // On ne met pas de font-size ici — la taille est gérée
-  // par les attributs height/width du SVG dans index.html.
   transition:
-    color var(--transition-speed) ease,
+    color  var(--transition-speed) ease,
     filter var(--transition-speed) ease;
 }
 
-// ✅ Classe ajoutée/retirée via setEyeHover() dans eye.ts
-// Cible l'élément #eyeSvg (enfant direct de #eye)
 #eyeSvg {
   display: block;
-  // La taille vient des attributs width/height du SVG (36px dans index.html)
-  // On peut les surcharger ici si besoin :
   width: 22pt;
   height: 22pt;
-  // fill="currentColor" dans le SVG — color: hérité de #eye
   transition:
-    color var(--transition-speed) ease,
+    color  var(--transition-speed) ease,
     filter var(--transition-speed) ease;
 
   &.eye-hover {
@@ -79,13 +82,11 @@ p {
 }
 
 // ─── Options wrapper ─────────────────────────────────────────────────────────
-// Positionné à droite du centre, légèrement au-dessus du milieu.
-// Identique au positionnement de l'ancien style.css.
 
 #options-wrapper {
   position: absolute;
   top: 48.4%;
-  left: calc(50% + 18pt); // ✅ Aligné sur l'ancien style (18pt, pas 20pt)
+  left: calc(50% + 18pt);
 
   display: flex;
   flex-direction: column;
@@ -93,11 +94,6 @@ p {
 }
 
 // ─── No-options label ────────────────────────────────────────────────────────
-// ✅ Retiré de position:absolute indépendant — il est maintenant
-// dans le flux de #options-wrapper (flex column), ce qui est correct.
-// Si tu veux qu'il soit positionné de façon identique à l'ancien code,
-// il faudrait le remettre hors du wrapper dans index.html.
-// Ici on garde l'approche dans le flux (plus maintenable).
 
 #no-options {
   color: var(--color-default);
@@ -110,9 +106,9 @@ p {
 
   background: linear-gradient(
     90deg,
-    rgba(20, 20, 20, 0.5) 0%,
-    rgba(20, 20, 20, 0.3) 60%,
-    rgba(47, 48, 53, 0) 100%
+    rgba(20, 20, 20, 0.5)  0%,
+    rgba(20, 20, 20, 0.3)  60%,
+    rgba(47, 48, 53, 0)    100%
   );
 
   border-left: 2px solid rgba(167, 139, 250, 0.25);
@@ -137,9 +133,9 @@ p {
 
   background: linear-gradient(
     90deg,
-    var(--bg-option) 0%,
-    rgba(12, 12, 16, 0.5) 65%,
-    var(--bg-fade-stop) 100%
+    var(--bg-option)          0%,
+    rgba(12, 12, 16, 0.5)    65%,
+    var(--bg-fade-stop)       100%
   );
 
   border-left: 2px solid transparent;
@@ -147,23 +143,31 @@ p {
 
   position: relative;
   cursor: pointer;
-  transition:
-    color var(--transition-speed) ease,
-    background var(--transition-speed) ease,
-    border-color var(--transition-speed) ease,
-    padding-left var(--transition-speed) ease,
-    filter var(--transition-speed) ease;
 
-  // ── Hover ────────────────────────────────────────────────────────────────
+  transition:
+    color         var(--transition-speed) ease,
+    background    var(--transition-speed) ease,
+    border-color  var(--transition-speed) ease,
+    padding-left  var(--transition-speed) ease,
+    filter        var(--transition-speed) ease;
+
+  animation: slideIn 180ms ease both;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{($i - 1) * 35}ms;
+    }
+  }
+
   &:hover {
     color: var(--color-hover);
     padding-left: 3pt;
 
     background: linear-gradient(
       90deg,
-      var(--bg-option-hover) 0%,
-      rgba(22, 22, 30, 0.45) 65%,
-      var(--bg-fade-stop) 100%
+      var(--bg-option-hover)       0%,
+      rgba(22, 22, 30, 0.45)      65%,
+      var(--bg-fade-stop)          100%
     );
 
     border-left-color: var(--color-accent);
@@ -174,13 +178,12 @@ p {
     }
   }
 
-  // ── Click flash ───────────────────────────────────────────────────────────
   &:active {
     filter: brightness(1.25);
   }
 }
 
-// ─── Icon ─────────────────────────────────────────────────────────────────────
+// ─── Icon ────────────────────────────────────────────────────────────────────
 
 .option-icon {
   flex-shrink: 0;
@@ -189,12 +192,11 @@ p {
 
   font-size: 11pt;
   line-height: var(--option-height);
-
   margin: 0 6pt;
 
   color: var(--color-icon-default);
   transition:
-    color var(--transition-speed) ease,
+    color  var(--transition-speed) ease,
     filter var(--transition-speed) ease;
 }
 
@@ -207,7 +209,7 @@ p {
   white-space: nowrap;
 }
 
-// ─── Cooldown bar ─────────────────────────────────────────────────────────────
+// ─── Cooldown ────────────────────────────────────────────────────────────────
 
 .option-cooling {
   cursor: not-allowed;
@@ -241,33 +243,85 @@ p {
   width: 100%;
   background: linear-gradient(
     90deg,
-    var(--color-accent) 0%,
-    rgba(167, 139, 250, 0.4) 100%
+    var(--color-accent)          0%,
+    rgba(167, 139, 250, 0.4)    100%
   );
   transform-origin: left center;
-  transition: none; // animé via JS requestAnimationFrame
+  transition: none;
   box-shadow: 0 0 6px rgba(167, 139, 250, 0.5);
 }
 
-// ─── Slide-in animation ───────────────────────────────────────────────────────
+// ─── CheckboxCard ─────────────────────────────────────────────────────────────
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-6pt);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+.checkbox-card {
+  cursor: pointer;
+  background: var(--bg-option) !important;
+  border-color: transparent !important;
 
-.option-container {
+  transition:
+    background    var(--transition-speed) ease,
+    border-color  var(--transition-speed) ease,
+    transform     var(--transition-speed) ease;
+
   animation: slideIn 180ms ease both;
 
   @for $i from 1 through 12 {
     &:nth-child(#{$i}) {
       animation-delay: #{($i - 1) * 35}ms;
     }
+  }
+
+  &:hover:not(.checkbox-card--disabled) {
+    background: var(--bg-option-hover) !important;
+    border-color: rgba(167, 139, 250, 0.4) !important;
+    transform: translateX(2pt);
+
+    .checkbox-card__icon {
+      color: var(--color-accent);
+      filter: drop-shadow(0 0 3px rgba(167, 139, 250, 0.6));
+    }
+  }
+
+  &:active:not(.checkbox-card--disabled) {
+    filter: brightness(1.25);
+  }
+
+  &--selected {
+    background: rgba(167, 139, 250, 0.12) !important;
+    border-color: var(--color-accent) !important;
+
+    .checkbox-card__label {
+      color: var(--color-hover);
+    }
+
+    .checkbox-card__icon {
+      color: var(--color-accent);
+    }
+  }
+
+  &--disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 16pt;
+    text-align: center;
+    font-size: 12pt;
+    color: var(--color-icon-default);
+
+    transition:
+      color  var(--transition-speed) ease,
+      filter var(--transition-speed) ease;
+  }
+
+  &__label {
+    color: var(--color-default);
+    font-family: var(--font-main);
+  }
+
+  &__description {
+    font-family: var(--font-main);
   }
 }
