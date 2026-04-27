@@ -1,0 +1,73 @@
+.wrapper { display: flex; flex-direction: column; gap: 6px; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.value {
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.track {
+  position: relative;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+  opacity: 0;
+  height: 16px;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Thumb visible element is handled via JS-driven fill + CSS-only thumb */
+.track::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--color-accent);
+  border: 2px solid #0a0a0f;
+  border-radius: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  left: var(--thumb-pos, 50%);
+  pointer-events: none;
+  transition: box-shadow 150ms ease;
+  box-shadow: 0 0 0 0px rgba(255,183,117,0.3);
+}
+
+.track:hover::after {
+  box-shadow: 0 0 0 4px rgba(255,183,117,0.2);
+}

@@ -1,0 +1,61 @@
+.wrapper { display: flex; flex-direction: column; gap: 4px; }
+
+.label {
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 4px;
+  color: var(--color-default);
+  font-family: var(--font-main);
+  font-size: 10.5pt;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 150ms ease, background 150ms ease;
+
+  &::placeholder { color: rgba(255,255,255,0.25); }
+
+  &:focus {
+    border-color: var(--color-accent);
+    background: rgba(255,255,255,0.07);
+  }
+}
+
+.hasLeft  .input { padding-left: 30px; }
+.hasRight .input { padding-right: 30px; }
+
+.iconLeft,
+.iconRight {
+  position: absolute;
+  font-size: 10pt;
+  color: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+.iconLeft  { left: 9px; }
+.iconRight { right: 9px; }
+
+.error {
+  font-family: var(--font-main);
+  font-size: 9pt;
+  color: #ff6b6b;
+  margin-top: 2px;
+}
+
+.hasError .input {
+  border-color: rgba(220, 50, 50, 0.5);
+}

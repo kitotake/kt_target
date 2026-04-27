@@ -1,0 +1,47 @@
+.wrapper { display: flex; flex-direction: column; gap: 4px; }
+
+.label {
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 4px;
+  color: var(--color-default);
+  font-family: var(--font-main);
+  font-size: 10.5pt;
+  padding: 6px 32px 6px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+
+  &:focus { border-color: var(--color-accent); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  option {
+    background: #18181f;
+    color: var(--color-default);
+  }
+}
+
+.chevron {
+  position: absolute;
+  right: 10px;
+  font-size: 9pt;
+  color: rgba(255,255,255,0.35);
+  pointer-events: none;
+}

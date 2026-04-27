@@ -1,15 +1,22 @@
 import { useCallback, useState } from "react";
 import type { NuiEvent, OptionMeta } from "../../typings";
-import { setEyeHover, parseOptions } from "../../utils";
+import { parseOptions } from "../../components/shared/utils/parseOptions";
 
-type TargetStore = {
+type EyeEl = HTMLElement | null;
+
+function setEyeHover(value: boolean): void {
+  const svg: EyeEl = document.getElementById("eyeSvg");
+  svg?.classList.toggle("eye-hover", value);
+}
+
+export type TargetState = {
   visible: boolean;
   optionsMeta: OptionMeta[];
   noOptions: string | null;
   handleNuiEvent: (data: NuiEvent) => void;
 };
 
-export function useTargetStore(): TargetStore {
+export function useTarget(): TargetState {
   const [visible, setVisible] = useState(false);
   const [optionsMeta, setOptionsMeta] = useState<OptionMeta[]>([]);
   const [noOptions, setNoOptions] = useState<string | null>(null);
@@ -23,7 +30,7 @@ export function useTargetStore(): TargetStore {
 
   const handleNuiEvent = useCallback(
     (data: NuiEvent) => {
-      if (!data || !data.event) return;
+      if (!data?.event) return;
 
       switch (data.event) {
         case "visible": {
@@ -33,26 +40,17 @@ export function useTargetStore(): TargetStore {
           if (!isVisible) reset();
           break;
         }
-
         case "leftTarget": {
-          // Garde le body visible (ALT encore maintenu)
-          // mais vide les options
           setEyeHover(true);
           setOptionsMeta([]);
           setNoOptions(null);
           break;
         }
-
         case "setTarget": {
           setVisible(true);
           setEyeHover(true);
-
           const { meta } = parseOptions(data);
-
           setOptionsMeta(meta);
-
-          // noOptionsLabel est envoyé par le Lua uniquement si des options
-          // existent mais sont toutes cachées (canInteract / groups / items)
           setNoOptions(data.noOptionsLabel ?? null);
           break;
         }

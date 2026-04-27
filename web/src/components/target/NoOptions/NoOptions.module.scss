@@ -1,0 +1,41 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 7pt;
+  padding: 4pt 8pt;
+
+  background: linear-gradient(
+    90deg,
+    rgba(20, 20, 20, 0.55)  0%,
+    rgba(20, 20, 20, 0.30) 60%,
+    rgba(20, 20, 20, 0.00) 100%
+  );
+
+  border-left: 2px solid rgba(255, 183, 117, 0.20);
+  border-radius: 1pt;
+
+  animation: noOptIn 200ms ease both;
+}
+
+.icon {
+  font-size: 9pt;
+  color: rgba(255, 183, 117, 0.40);
+  flex-shrink: 0;
+}
+
+.label {
+  font-family: var(--font-main);
+  font-size: 9.5pt;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-default);
+  opacity: 0.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes noOptIn {
+  from { opacity: 0; transform: translateX(-4pt); }
+  to   { opacity: 1; transform: translateX(0);    }
+}

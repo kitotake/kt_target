@@ -1,0 +1,36 @@
+.keybind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6pt;
+  animation: fadeIn 250ms ease both;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22pt;
+  height: 16pt;
+  padding: 0 5pt;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-bottom-width: 2px;
+  border-radius: 3pt;
+  font-family: var(--font-main);
+  font-size: 8pt;
+  font-weight: 700;
+  color: var(--color-default);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.desc {
+  font-family: var(--font-main);
+  font-size: 8.5pt;
+  color: rgba(255,255,255,0.35);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

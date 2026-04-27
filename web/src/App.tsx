@@ -1,11 +1,12 @@
 import React, { useCallback } from "react";
-import { useNuiMessage, useVisibility } from "./hooks";
-import { useTargetStore } from "./features/target";
-import { TargetMenu } from "./components/TargetMenu";
-import type { NuiEvent } from "./typings";
+import { useNuiMessage } from "./hooks/useNuiMessage";
+import { useVisibility }  from "./hooks/useVisibility";
+import { useTarget }      from "./features/target/useTarget";
+import { TargetMenu }     from "./components/target/TargetMenu/TargetMenu";
+import type { NuiEvent }  from "./typings";
 
 export const App: React.FC = () => {
-  const { visible, optionsMeta, noOptions, handleNuiEvent } = useTargetStore();
+  const { visible, optionsMeta, noOptions, handleNuiEvent } = useTarget();
 
   useVisibility(visible);
 
