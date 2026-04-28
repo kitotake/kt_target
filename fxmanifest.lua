@@ -25,6 +25,8 @@ shared_scripts {
 client_scripts {
     'client/main.lua',
 
+    'client/test.lua',
+    
     -- Core (requireables)
     'client/core/loop.lua',
     'client/core/raycast.lua',
