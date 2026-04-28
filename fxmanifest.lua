@@ -5,7 +5,7 @@ game 'gta5'
 
 name        'kt_target'
 author      'kitotake'
-version     '1.18.0'
+version     '1.18.1'
 repository  'https://github.com/kitotake/kt_target'
 description 'A performant and flexible standalone targeting resource for FiveM.'
 
@@ -21,12 +21,11 @@ shared_scripts {
     'shared/validators.lua',
     'shared/middleware.lua',
 }
- -- ─── Client ─────────────────────────────────────────────────────────────────
+
+-- ─── Client ──────────────────────────────────────────────────────────────────
 client_scripts {
     'client/main.lua',
 
-    'client/test.lua',
-    
     -- Core (requireables)
     'client/core/loop.lua',
     'client/core/raycast.lua',
@@ -56,32 +55,79 @@ client_scripts {
     -- API (requireable — enregistre les exports)
     'client/api.lua',
 
-    -- Framework adapters (requireables depuis main.lua)
+    -- Framework adapters (chargés conditionnellement)
     'client/framework/esx.lua',
     'client/framework/union.lua',
 
-    
-    -- Admin (requireable)
-    'client/admin/object_target.lua',
+    -- Admin
+  --  'client/admin/object_target.lua',
 
-    -- Defaults (requireable)
+    -- Defaults (interactions véhicules par défaut)
     'client/defaults.lua',
 
-    -- Compat (requireable)
+    -- Compat qtarget
     'client/compat/qtarget.lua',
 
-    -- Commands (top-level, guard interne par convar)
+    -- Commands (guard interne par convar kt_target:debug)
     'client/commands/target.lua',
 
-   -- Debug (top-level, guard interne par convar)
+    -- Debug (guard interne par convar kt_target:debug)
     'client/debug.lua',
     'client/debug/init.lua',
+}
+
+-- ─── Exports client ───────────────────────────────────────────────────────────
+-- Zones
+client_exports {
+    -- Zones
+    'addPolyZone',
+    'addBoxZone',
+    'addSphereZone',
+    'removeZone',
+    'zoneExists',
+
+    -- Globaux par type d'entité
+    'addGlobalPed',
+    'removeGlobalPed',
+    'addGlobalVehicle',
+    'removeGlobalVehicle',
+    'addGlobalObject',
+    'removeGlobalObject',
+    'addGlobalPlayer',
+    'removeGlobalPlayer',
+    'addGlobalOption',
+    'removeGlobalOption',
+
+    -- Modèles
+    'addModel',
+    'removeModel',
+
+    -- Entités réseau
+    'addEntity',
+    'removeEntity',
+
+    -- Entités locales
+    'addLocalEntity',
+    'removeLocalEntity',
+
+    -- Contrôle
+    'disableTargeting',
+    'isActive',
+    'clearAll',
+
+    -- Interne
+    'getTargetOptions',
+    'disableTargeting',
 }
 
 -- ─── Serveur ─────────────────────────────────────────────────────────────────
 server_scripts {
     'server/main.lua',
 }
+
+-- ─── Exports serveur ──────────────────────────────────────────────────────────
+-- (aucun export serveur public pour le moment)
+server_exports {}
 
 -- ─── Fichiers statiques (NUI + locales) ──────────────────────────────────────
 files {

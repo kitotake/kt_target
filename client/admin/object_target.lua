@@ -46,7 +46,7 @@ local function showObjectInfos(data)
     local coords  = GetEntityCoords(entity)
     local heading = GetEntityHeading(entity)
     local model   = GetEntityModel(entity)
-    local frozen  = IsEntityFrozen(entity)
+    local frozen  = IsEntityPositionFrozen(entity)
     local netId   = NetworkGetEntityIsNetworked(entity)
                     and NetworkGetNetworkIdFromEntity(entity)
                     or 'local'
@@ -66,7 +66,7 @@ local function toggleFreeze(data)
     local entity = data.entity
     if not DoesEntityExist(entity) then return end
 
-    local wasFrozen = frozenObjects[entity]
+    local wasFrozen = frozenObjects[entity] or IsEntityPositionFrozen(entity)
     FreezeEntityPosition(entity, not wasFrozen)
     frozenObjects[entity] = not wasFrozen or nil
 
@@ -304,37 +304,5 @@ api.addGlobalPlayer({
         end,
     },
 })
-
--- Test 5 : Zone de test (BoxZone autour des coordonnées 0,0,0 — à adapter)
--- Décommente et adapte les coords à ton serveur
---[[
-api.addBoxZone({
-    name    = 'test:zone:spawn',
-    coords  = vector3(0.0, 0.0, 70.0),
-    size    = vector3(5.0, 5.0, 3.0),
-    options = {
-        {
-            name     = 'test:zone:heal',
-            icon     = 'fa-solid fa-heart-pulse',
-            label    = 'Se soigner',
-            onSelect = function()
-                local ped = cache.ped
-                SetEntityHealth(ped, 200)
-                notify('Zone', 'success', 2000, 'Vous avez été soigné !')
-            end,
-        },
-        {
-            name     = 'test:zone:weather',
-            icon     = 'fa-solid fa-cloud-sun',
-            label    = 'Changer météo',
-            onSelect = function()
-                SetWeatherTypePersist('EXTRASUNNY')
-                SetWeatherTypeNow('EXTRASUNNY')
-                notify('Zone', 'success', 2000, 'Météo ensoleillée !')
-            end,
-        },
-    },
-})
-]]
 
 print('[kt_target] client/admin/object_target.lua chargé')
