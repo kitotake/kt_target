@@ -1,30 +1,21 @@
 import { useCallback, useRef, useState } from "react";
 import { fetchNui } from "../../../utils/fetchNui";
+// FIX: Import depuis src/config (source unique) au lieu de "../../../config"
+// qui pointait vers le même fichier — conservé pour clarté.
 import { CLICK_LOCKOUT_MS } from "../../../config";
 import type { OptionMeta } from "../../../typings";
 
 export interface SelectionState {
-  /** Whether this option key is currently cooling down */
   isCooling: boolean;
-  /** Cooldown progress 1 → 0 */
   progress: number;
 }
 
 export interface UseTargetSelectionReturn {
-  /** Call when an option is clicked / activated */
   selectOption: (meta: OptionMeta) => Promise<void>;
-  /** Get per-option selection state by key */
   getState: (key: string) => SelectionState;
 }
 
-/**
- * Centralises the NUI `select` call and per-option cooldown tracking.
- *
- * Each option keeps its own RAF-driven cooldown progress so multiple
- * options can cool down independently.
- */
 export function useTargetSelection(): UseTargetSelectionReturn {
-  // key → cooldown state
   const [states, setStates] = useState<Record<string, SelectionState>>({});
   const rafRefs = useRef<Record<string, number>>({});
 
@@ -57,13 +48,11 @@ export function useTargetSelection(): UseTargetSelectionReturn {
       const state = states[meta.key];
       if (state?.isCooling || meta.data.hide) return;
 
-      // Build payload — mirrors existing convention
       const payload =
         meta.zoneId !== undefined
           ? [0, meta.optionIndex, meta.zoneId]
           : [meta.groupIndex ?? 0, meta.optionIndex, 0];
 
-      // Grab DOM element to block pointer events during cooldown
       const el = document.querySelector<HTMLElement>(
         `[data-option-key="${meta.key}"]`
       );
@@ -74,13 +63,12 @@ export function useTargetSelection(): UseTargetSelectionReturn {
 
         if (meta.data.cooldown && meta.data.cooldown > 0) {
           startCooldown(meta.key, meta.data.cooldown, el);
-          return; // pointer-events re-enabled inside startCooldown
+          return;
         }
       } catch (err) {
         console.error("[useTargetSelection] select failed:", err);
       }
 
-      // No cooldown — re-enable after lockout
       setTimeout(() => {
         if (el) el.style.pointerEvents = "auto";
       }, CLICK_LOCKOUT_MS);

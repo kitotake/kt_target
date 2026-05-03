@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import { cx } from "../../shared/utils/classNames";
-import { CLICK_LOCKOUT_MS } from "../../shared/utils/constants";
+import { CLICK_LOCKOUT_MS } from "../../../config";
 import { useCooldown } from "../../../hooks/useCooldown";
 import { fetchNui } from "../../../utils/fetchNui";
 import type { TargetOptionProps } from "./TargetOption.types";
@@ -22,6 +22,8 @@ export const TargetOption: React.FC<TargetOptionProps> = React.memo(
           ? [0, meta.optionIndex, meta.zoneId]
           : [meta.groupIndex ?? 0, meta.optionIndex, 0];
 
+      // FIX: le re-enable de pointer-events est maintenant garanti dans
+      // tous les cas (succès, cooldown, et erreur) via un try/finally.
       try {
         await fetchNui("select", payload);
         onSelect?.(meta);
@@ -30,15 +32,17 @@ export const TargetOption: React.FC<TargetOptionProps> = React.memo(
           startCooldown(meta.data.cooldown, () => {
             if (el) el.style.pointerEvents = "auto";
           });
-          return;
+          return; // pointer-events re-activés par le callback du cooldown
         }
       } catch (err) {
         console.error("[TargetOption] select failed:", err);
+      } finally {
+        // Re-active les pointer-events sauf si un cooldown a pris le relais
+        // (le cooldown retourne avant d'atteindre ce finally grâce au return)
+        setTimeout(() => {
+          if (el) el.style.pointerEvents = "auto";
+        }, CLICK_LOCKOUT_MS);
       }
-
-      setTimeout(() => {
-        if (el) el.style.pointerEvents = "auto";
-      }, CLICK_LOCKOUT_MS);
     }, [isCooling, meta, onSelect, startCooldown]);
 
     if (meta.data.hide) return null;

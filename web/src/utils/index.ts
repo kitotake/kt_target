@@ -1,3 +1,3 @@
 export * from "./fetchNui";
 export * from "./eye";
-export * from "./options";
+export * from "./parseOptions";

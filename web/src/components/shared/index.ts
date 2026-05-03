@@ -6,4 +6,4 @@ export * from "./icons/types";
 export * from "./utils/classNames";
 export * from "./utils/format";
 export * from "./utils/constants";
-export * from "./utils/parseOptions";
+export * from "../../utils/parseOptions";

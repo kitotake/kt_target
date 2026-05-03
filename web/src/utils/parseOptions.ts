@@ -1,4 +1,12 @@
-import type { NuiEvent, OptionMeta } from "../../../typings";
+/**
+ * FIX: parseOptions existait en double :
+ *   - web/src/utils/options.ts
+ *   - web/src/components/shared/utils/parseOptions.ts
+ *
+ * Ce fichier est désormais l'unique source de vérité.
+ * Les deux anciens fichiers importent depuis ici.
+ */
+import type { NuiEvent, OptionMeta } from "../typings";
 
 type SetTargetPayload = Extract<NuiEvent, { event: "setTarget" }>;
 
@@ -11,7 +19,7 @@ export function parseOptions(data: SetTargetPayload): {
 
   if (data.groups) {
     data.groups.forEach((group, gIdx) => {
-      const groupIndex = gIdx + 1;
+      const groupIndex = gIdx + 1; // 1-based pour Lua
       group.options.forEach((opt, oIdx) => {
         const optionIndex = oIdx + 1;
         if (!opt.hide) totalVisible++;

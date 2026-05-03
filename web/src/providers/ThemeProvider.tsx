@@ -1,22 +1,15 @@
+/**
+ * FIX: @mantine/core était importé ici mais absent de package.json,
+ * provoquant une erreur à l'installation. Ce provider n'est pas utilisé
+ * dans l'application (App.tsx et main.tsx ne l'importent pas).
+ *
+ * Il est conservé comme composant stub sans dépendance externe,
+ * prêt à être réactivé si @mantine/core est ajouté au projet.
+ */
 import React from "react";
-import { MantineProvider, createTheme } from "@mantine/core";
-
-const theme = createTheme({
-  fontFamily: "Nunito, sans-serif",
-  shadows: { sm: "1px 1px 3px rgba(0, 0, 0, 0.5)" },
-  components: {
-    Button: {
-      styles: {
-        root: { border: "none" },
-      },
-    },
-  },
-});
 
 type Props = { children: React.ReactNode };
 
 export const ThemeProvider: React.FC<Props> = ({ children }) => (
-  <MantineProvider theme={theme} defaultColorScheme="dark">
-    {children}
-  </MantineProvider>
+  <>{children}</>
 );

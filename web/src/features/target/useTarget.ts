@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { NuiEvent, OptionMeta } from "../../typings";
-import { parseOptions } from "../../components/shared/utils/parseOptions";
+import { parseOptions } from "../../utils/parseOptions";
 
 type EyeEl = HTMLElement | null;
 

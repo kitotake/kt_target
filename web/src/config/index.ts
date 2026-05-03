@@ -1,6 +1,7 @@
 // ─── Resource name (FiveM NUI) ────────────────────────────────────────────────
 
 export const RESOURCE_NAME =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).GetParentResourceName?.() ?? "kt_target";
 
 // ─── Default labels ───────────────────────────────────────────────────────────
