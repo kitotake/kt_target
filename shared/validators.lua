@@ -1,12 +1,6 @@
 -- shared/validators.lua
--- Validateurs d'entrée pour les options et les zones.
-
 local validators = {}
 
----Valide qu'une option possède les champs minimaux requis.
----@param option table
----@return boolean ok
----@return string? reason
 function validators.option(option)
     if type(option) ~= 'table' then
         return false, 'option must be a table'
@@ -16,7 +10,6 @@ function validators.option(option)
         return false, 'option.label must be a non-empty string'
     end
 
-    -- Au moins une action doit être définie
     local hasAction = option.onSelect
         or option.export
         or option.event
@@ -33,10 +26,6 @@ function validators.option(option)
     return true
 end
 
----Valide les données d'une zone.
----@param data table
----@return boolean ok
----@return string? reason
 function validators.zone(data)
     if type(data) ~= 'table' then
         return false, 'zone data must be a table'
@@ -49,9 +38,6 @@ function validators.zone(data)
     return true
 end
 
----Valide un identifiant de ressource FiveM.
----@param resource string
----@return boolean
 function validators.resource(resource)
     return type(resource) == 'string' and #resource > 0
 end

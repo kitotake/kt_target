@@ -16,19 +16,30 @@ local function convert(options)
     local distance = options.distance
     options = options.options
 
-    -- Accepte hashmap ou tableau mixte
+    -- FIX: Collecte d'abord les clés non-numériques SANS muter la table
+    -- en cours d'itération (comportement indéfini en Lua).
+    local toInsert = {}
     for k, v in pairs(options) do
         if type(k) ~= 'number' then
-            table.insert(options, v)
+            toInsert[#toInsert + 1] = v
         end
     end
+    for _, v in ipairs(toInsert) do
+        options[#options + 1] = v
+    end
 
-    for id, v in pairs(options) do
-        if type(id) ~= 'number' then
-            options[id] = nil
-            goto continue
+    -- Collecte des clés non-numériques à supprimer après itération
+    local toRemove = {}
+    for k in pairs(options) do
+        if type(k) ~= 'number' then
+            toRemove[#toRemove + 1] = k
         end
+    end
+    for _, k in ipairs(toRemove) do
+        options[k] = nil
+    end
 
+    for _, v in ipairs(options) do
         v.onSelect = v.action
         v.distance = v.distance or distance
         v.name     = v.name or v.label
@@ -50,8 +61,6 @@ local function convert(options)
         v.item          = nil
         v.required_item = nil
         v.qtarget       = true
-
-        ::continue::
     end
 
     return options

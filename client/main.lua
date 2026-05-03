@@ -65,12 +65,10 @@ local function setCombatBlock(active)
 end
 
 ---Restaure immédiatement tous les inputs de combat.
----À appeler UNE SEULE FOIS lors de la désactivation, pas en boucle.
 local function restoreCombatControls()
-    local ped = cache.ped
-    -- DisableControlAction(false) n'est pas nécessaire car l'effet
-    -- est automatiquement annulé dès qu'on arrête de l'appeler chaque frame.
-    -- On remet quand même les flags ped explicitement.
+    -- FIX: Vérification de l'existence de cache.ped avant utilisation
+    local ped = cache and cache.ped
+    if not ped or not DoesEntityExist(ped) then return end
     SetPedCanSwitchWeapon(ped, true)
     SetPedConfigFlag(ped, 122, false)
 end
@@ -183,14 +181,11 @@ local function buildNuiPayload(optionsGroups, nearbyZones)
 end
 
 -- ─── INPUT LOOP ─────────────────────────────────────────────────────────────
--- Séparé de la target loop pour garantir que le bloc combat tourne
--- à CHAQUE frame, indépendamment du Wait(0)/Wait(100) de la target loop.
 CreateThread(function()
     while true do
         Wait(0)
 
         if _disabled then
-            -- Targeting désactivé en cours d'utilisation → nettoyage immédiat
             if combatBlocked then
                 combatBlocked = false
                 restoreCombatControls()
@@ -198,30 +193,27 @@ CreateThread(function()
             end
 
         elseif IsControlPressed(0, HOTKEY) then
-            -- ── ALT pressé ──────────────────────────────────────────────────
             if not combatBlocked then
                 combatBlocked = true
                 bridge.setVisible(true)
             end
 
-            -- Maintenu chaque frame tant que ALT est enfoncé
-            local ped = cache.ped
-            setCombatBlock(true)
-            SetPedCanSwitchWeapon(ped, false)
-            SetCurrentPedWeapon(ped, `WEAPON_UNARMED`, true)
-            SetPedConfigFlag(ped, 122, true)
+            -- FIX: Guard sur cache.ped
+            local ped = cache and cache.ped
+            if ped and DoesEntityExist(ped) then
+                setCombatBlock(true)
+                SetPedCanSwitchWeapon(ped, false)
+                SetCurrentPedWeapon(ped, `WEAPON_UNARMED`, true)
+                SetPedConfigFlag(ped, 122, true)
 
-            if IsPedInMeleeCombat(ped) then
-                ClearPedTasksImmediately(ped)
+                if IsPedInMeleeCombat(ped) then
+                    ClearPedTasksImmediately(ped)
+                end
             end
 
         else
-            -- ── ALT relâché ─────────────────────────────────────────────────
             if combatBlocked then
                 combatBlocked = false
-                -- Les DisableControlAction s'annulent automatiquement
-                -- dès qu'ils ne sont plus appelés chaque frame,
-                -- mais on remet les flags ped explicitement.
                 restoreCombatControls()
                 closeTarget()
             end
@@ -237,7 +229,13 @@ CreateThread(function()
 
         if not _disabled and combatBlocked then
 
-            local ped    = cache.ped
+            -- FIX: Guard sur cache.ped
+            local ped = cache and cache.ped
+            if not ped or not DoesEntityExist(ped) then
+                Wait(100)
+                goto continue
+            end
+
             local coords = GetEntityCoords(ped)
 
             local hit, entityHit, endCoords = raycast.fromCamera(
@@ -247,7 +245,6 @@ CreateThread(function()
             local dist = hit and #(coords - endCoords) or Config.maxDistance
             dist = toNumber(dist) or Config.maxDistance
 
-            -- Valide l'entité AVANT tout appel réseau
             local entityValid = false
             if hit and entityHit ~= 0 and DoesEntityExist(entityHit) then
                 local ec = GetEntityCoords(entityHit)
@@ -333,22 +330,39 @@ CreateThread(function()
         else
             Wait(100)
         end
+
+        ::continue::
     end
 end)
 
 -- ─── CALLBACK NUI ───────────────────────────────────────────────────────────
 RegisterNUICallback('select', function(data, cb)
+    -- FIX: Guard contre un payload NUI malformé
+    if type(data) ~= 'table' then
+        cb('error')
+        return
+    end
+
     local groupIndex  = data[1]
     local optionIndex = data[2]
     local zoneId      = data[3]
+
+    -- FIX: Validation des indices
+    if type(groupIndex) ~= 'number' or type(optionIndex) ~= 'number' then
+        cb('error')
+        return
+    end
 
     local currentState = state.get()
     local option
 
     if zoneId and zoneId ~= 0 then
-        local zones = lib.zones.getNearby(GetEntityCoords(cache.ped), Config.zoneDistance) or {}
-        local zone  = zones[zoneId]
-        if zone then option = zone.options[optionIndex] end
+        local ped = cache and cache.ped
+        if ped then
+            local zones = lib.zones.getNearby(GetEntityCoords(ped), Config.zoneDistance) or {}
+            local zone  = zones[zoneId]
+            if zone then option = zone.options[optionIndex] end
+        end
     else
         local group = _lastGroupList[groupIndex]
         if group then option = group.options[optionIndex] end

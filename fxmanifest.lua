@@ -77,7 +77,6 @@ client_scripts {
 }
 
 -- ─── Exports client ───────────────────────────────────────────────────────────
--- Zones
 client_exports {
     -- Zones
     'addPolyZone',
@@ -111,13 +110,12 @@ client_exports {
     'removeLocalEntity',
 
     -- Contrôle
-    'disableTargeting',
+    'disableTargeting',  -- FIX: suppression du doublon
     'isActive',
     'clearAll',
 
     -- Interne
     'getTargetOptions',
-    'disableTargeting',
 }
 
 -- ─── Serveur ─────────────────────────────────────────────────────────────────
@@ -126,7 +124,6 @@ server_scripts {
 }
 
 -- ─── Exports serveur ──────────────────────────────────────────────────────────
--- (aucun export serveur public pour le moment)
 server_exports {}
 
 -- ─── Fichiers statiques (NUI + locales) ──────────────────────────────────────

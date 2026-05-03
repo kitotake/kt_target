@@ -16,16 +16,16 @@ exports('removeZone',    function(id, suppress)   registry.removeZone(id, suppre
 exports('zoneExists',    function(id)             return registry.zoneExists(id)             end)
 
 -- Globaux
-exports('addGlobalPed',      function(opts)  registry.addGlobalPed(opts)      end)
-exports('removeGlobalPed',   function(opts)  registry.removeGlobalPed(opts)   end)
-exports('addGlobalVehicle',  function(opts)  registry.addGlobalVehicle(opts)  end)
-exports('removeGlobalVehicle',function(opts) registry.removeGlobalVehicle(opts) end)
-exports('addGlobalObject',   function(opts)  registry.addGlobalObject(opts)   end)
-exports('removeGlobalObject',function(opts)  registry.removeGlobalObject(opts) end)
-exports('addGlobalPlayer',   function(opts)  registry.addGlobalPlayer(opts)   end)
-exports('removeGlobalPlayer',function(opts)  registry.removeGlobalPlayer(opts) end)
-exports('addGlobalOption',   function(opts)  registry.addGlobalOption(opts)   end)
-exports('removeGlobalOption',function(opts)  registry.removeGlobalOption(opts) end)
+exports('addGlobalPed',       function(opts)  registry.addGlobalPed(opts)       end)
+exports('removeGlobalPed',    function(opts)  registry.removeGlobalPed(opts)    end)
+exports('addGlobalVehicle',   function(opts)  registry.addGlobalVehicle(opts)   end)
+exports('removeGlobalVehicle',function(opts)  registry.removeGlobalVehicle(opts) end)
+exports('addGlobalObject',    function(opts)  registry.addGlobalObject(opts)    end)
+exports('removeGlobalObject', function(opts)  registry.removeGlobalObject(opts) end)
+exports('addGlobalPlayer',    function(opts)  registry.addGlobalPlayer(opts)    end)
+exports('removeGlobalPlayer', function(opts)  registry.removeGlobalPlayer(opts) end)
+exports('addGlobalOption',    function(opts)  registry.addGlobalOption(opts)    end)
+exports('removeGlobalOption', function(opts)  registry.removeGlobalOption(opts) end)
 
 -- Modèles
 exports('addModel',    function(arr, opts)   registry.addModel(arr, opts)    end)
@@ -47,14 +47,10 @@ exports('getTargetOptions', function(entity, etype, emodel)
     return registry.getTargetOptions(entity, etype, emodel)
 end)
 
--- Rétrocompatibilité avec l'ancienne API objet (kt_target:method())
--- Certains scripts appellent `local kt = exports.kt_target` puis `kt:addGlobalObject(...)`
--- Le mécanisme __index ci-dessous redirige les appels de méthode vers le registre.
-local _meta = {
-    __index = function(_, key)
-        return registry[key] and function(_, ...) return registry[key](...) end or nil
-    end,
-}
-setmetatable(exports.kt_target or {}, _meta)
+-- FIX: Le setmetatable précédent tentait de muter exports.kt_target qui n'est
+-- pas un objet Lua standard — cette approche ne fonctionnait pas de manière
+-- fiable. La compatibilité objet (kt:method()) est assurée directement
+-- par les exports FiveM déclarés ci-dessus, qui supportent la syntaxe
+-- exports.kt_target:method(...) nativement.
 
 return registry

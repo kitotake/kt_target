@@ -7,8 +7,6 @@ local function shallowClone(t)
     return copy
 end
 
----@param option KtTargetOption
----@param response table
 function executor.run(option, response)
     if option.onSelect then
         local ok, err = pcall(option.onSelect,

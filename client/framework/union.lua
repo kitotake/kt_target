@@ -10,7 +10,7 @@ local utils = require 'client.utils'
 
 local playerJob   = 'unemployed'
 local playerGrade = 0
-local playerGroup = 'user'  -- 'admin' | 'moderator' | 'founder' | 'user'
+local playerGroup = 'user'
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -89,15 +89,23 @@ function utils.hasPlayerGotGroup(filter)
         return playerJob == filter
 
     elseif _type == 'table' then
-        local tabletype = table.type(filter)
+        -- FIX: table.type est une extension ox_lib non garantie.
+        -- Détection manuelle : si une clé non-numérique existe → hash map.
+        local isHash = false
+        for k in pairs(filter) do
+            if type(k) ~= 'number' then
+                isHash = true
+                break
+            end
+        end
 
-        if tabletype == 'hash' then
+        if isHash then
             for jobName, minGrade in pairs(filter) do
                 if playerJob == jobName and playerGrade >= minGrade then
                     return true
                 end
             end
-        elseif tabletype == 'array' then
+        else
             for i = 1, #filter do
                 if playerJob == filter[i] then return true end
             end
@@ -107,4 +115,4 @@ function utils.hasPlayerGotGroup(filter)
     return false
 end
 
-print('[kt_target] Adapteur Union chargé '.. (unionOk and 'avec succès.' or 'mais union semble indisponible.'))
+print('[kt_target] Adapteur Union chargé ' .. (unionOk and 'avec succès.' or 'mais union semble indisponible.'))

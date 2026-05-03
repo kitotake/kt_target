@@ -21,7 +21,6 @@ local function currentResource()
     return GetCurrentResourceName()
 end
 
--- 🔥 FIX : normalise ULTRA SAFE
 local function normalise(raw)
     local list = {}
 
@@ -44,13 +43,11 @@ local function normalise(raw)
     return list
 end
 
--- 🔥 FIX : validation stricte (PLUS DE "?")
 local function validateAll(list)
     local valid = {}
 
     for i, opt in ipairs(list) do
         local ok, reason = validators.option(opt)
-
         local labelOk = type(opt.label) == "string" and opt.label ~= ""
 
         if ok and labelOk then
@@ -66,7 +63,6 @@ local function validateAll(list)
     return valid
 end
 
--- 🔥 FIX : suppression safe
 local function removeFromStore(store, filter)
     if not filter then
         local res = currentResource()
@@ -110,7 +106,6 @@ local api = {}
 
 function api.addPolyZone(data)
     data.resource = data.resource or currentResource()
-
     local opts = normalise(data.options)
     data.options = validateAll(opts)
 
@@ -126,7 +121,6 @@ end
 
 function api.addBoxZone(data)
     data.resource = data.resource or currentResource()
-
     local opts = normalise(data.options)
     data.options = validateAll(opts)
 
@@ -143,7 +137,6 @@ end
 
 function api.addSphereZone(data)
     data.resource = data.resource or currentResource()
-
     local opts = normalise(data.options)
     data.options = validateAll(opts)
 
@@ -178,18 +171,15 @@ function api.addEntity(arr, options)
 
     for _, netId in ipairs(list) do
         if not entities[netId] then entities[netId] = {} end
-
         for _, opt in ipairs(opts) do
             entities[netId][#entities[netId] + 1] = opt
         end
-
         TriggerServerEvent('kt_target:setEntityHasOptions', netId)
     end
 end
 
 function api.removeEntity(arr, filter)
     local list = utils.toArray(arr)
-
     for _, netId in ipairs(list) do
         if entities[netId] then
             if not filter then
@@ -210,7 +200,6 @@ function api.addLocalEntity(arr, options)
 
     for _, handle in ipairs(list) do
         if not localEntities[handle] then localEntities[handle] = {} end
-
         for _, opt in ipairs(opts) do
             localEntities[handle][#localEntities[handle] + 1] = opt
         end
@@ -219,7 +208,6 @@ end
 
 function api.removeLocalEntity(arr, filter)
     local list = utils.toArray(arr)
-
     for _, handle in ipairs(list) do
         if localEntities[handle] then
             if not filter then
@@ -240,9 +228,7 @@ function api.addModel(arr, options)
 
     for _, model in ipairs(list) do
         local hash = type(model) == 'string' and joaat(model) or model
-
         if not models[hash] then models[hash] = {} end
-
         for _, opt in ipairs(opts) do
             models[hash][#models[hash] + 1] = opt
         end
@@ -251,10 +237,8 @@ end
 
 function api.removeModel(arr, filter)
     local list = utils.toArray(arr)
-
     for _, model in ipairs(list) do
         local hash = type(model) == 'string' and joaat(model) or model
-
         if models[hash] then
             if not filter then
                 models[hash] = nil
@@ -270,22 +254,21 @@ end
 
 local function addToStore(store, raw)
     local opts = validateAll(normalise(raw))
-
     for _, opt in ipairs(opts) do
         store[#store + 1] = opt
     end
 end
 
-function api.addGlobalPed(options)     addToStore(peds, options) end
-function api.addGlobalVehicle(options) addToStore(vehicles, options) end
-function api.addGlobalObject(options)  addToStore(objects, options) end
-function api.addGlobalPlayer(options)  addToStore(players, options) end
+function api.addGlobalPed(options)     addToStore(peds, options)       end
+function api.addGlobalVehicle(options) addToStore(vehicles, options)   end
+function api.addGlobalObject(options)  addToStore(objects, options)    end
+function api.addGlobalPlayer(options)  addToStore(players, options)    end
 function api.addGlobalOption(options)  addToStore(globalOpts, options) end
 
-function api.removeGlobalPed(filter)     removeFromStore(peds, filter) end
-function api.removeGlobalVehicle(filter) removeFromStore(vehicles, filter) end
-function api.removeGlobalObject(filter)  removeFromStore(objects, filter) end
-function api.removeGlobalPlayer(filter)  removeFromStore(players, filter) end
+function api.removeGlobalPed(filter)     removeFromStore(peds, filter)       end
+function api.removeGlobalVehicle(filter) removeFromStore(vehicles, filter)   end
+function api.removeGlobalObject(filter)  removeFromStore(objects, filter)    end
+function api.removeGlobalPlayer(filter)  removeFromStore(players, filter)    end
 function api.removeGlobalOption(filter)  removeFromStore(globalOpts, filter) end
 
 -- ── GET OPTIONS ─────────────────────────────────────────────────────────────
@@ -296,7 +279,6 @@ function api.getTargetOptions(entity, etype, emodel)
     local function merge(key, store)
         if store and #store > 0 then
             result[key] = result[key] or {}
-
             for _, opt in ipairs(store) do
                 result[key][#result[key] + 1] = opt
             end
@@ -308,10 +290,8 @@ function api.getTargetOptions(entity, etype, emodel)
     if etype == ENTITY_TYPE_PED then
         merge('globalPlayer', players)
         merge('globalPed', peds)
-
     elseif etype == ENTITY_TYPE_VEHICLE then
         merge('globalVehicle', vehicles)
-
     elseif etype == ENTITY_TYPE_OBJECT then
         merge('globalObject', objects)
     end

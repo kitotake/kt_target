@@ -8,22 +8,28 @@ local ok, ESX = pcall(function()
 end)
 
 if not ok or not ESX then
-    -- es_extended absent ou pas encore prêt → on s'arrête silencieusement
     return
 end
 
 local utils  = require 'client.utils'
 local groups = { 'job', 'job2' }
 
--- Référence vers la table interne d'items de utils
 local playerItems  = utils.getItems()
 local playerGroups = {}
 
 local usingktinventory = utils.hasExport('kt_inventory.Items')
 
+-- FIX: table.wipe est une extension ox_lib/kt_lib non garantie.
+-- On utilise une alternative compatible Lua 5.4 standard.
+local function clearTable(t)
+    for k in pairs(t) do
+        t[k] = nil
+    end
+end
+
 local function setPlayerData(playerData)
-    table.wipe(playerGroups)
-    table.wipe(playerItems)
+    clearTable(playerGroups)
+    clearTable(playerItems)
 
     for i = 1, #groups do
         local group = groups[i]
@@ -42,7 +48,6 @@ local function setPlayerData(playerData)
     end
 end
 
--- Charge les données si le joueur est déjà connecté
 if ESX.PlayerLoaded then
     setPlayerData(ESX.PlayerData)
 end
@@ -67,7 +72,6 @@ AddEventHandler('esx:removeInventoryItem', function(name, count)
     playerItems[name] = count
 end)
 
--- ✅ Surcharge de utils.hasPlayerGotGroup pour ESX
 ---@diagnostic disable-next-line: duplicate-set-field
 function utils.hasPlayerGotGroup(filter)
     if not filter then return true end
@@ -83,15 +87,23 @@ function utils.hasPlayerGotGroup(filter)
             if filter == data.name then return true end
 
         elseif _type == 'table' then
-            local tabletype = table.type(filter)
+            -- FIX: table.type est une extension ox_lib. On utilise une
+            -- détection manuelle compatible Lua 5.4 standard.
+            local isHash = false
+            for k in pairs(filter) do
+                if type(k) ~= 'number' then
+                    isHash = true
+                    break
+                end
+            end
 
-            if tabletype == 'hash' then
+            if isHash then
                 for name, grade in pairs(filter) do
                     if data.name == name and grade <= (data.grade or 0) then
                         return true
                     end
                 end
-            elseif tabletype == 'array' then
+            else
                 for j = 1, #filter do
                     if data.name == filter[j] then return true end
                 end
