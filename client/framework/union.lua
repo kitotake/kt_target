@@ -78,6 +78,14 @@ RegisterNetEvent('union:character:selected', function()
     end)
 end)
 
+
+RegisterNetEvent("union:character:reload", function()
+    SetTimeout(200, function()
+        refreshFromCharacter()
+        refreshPlayerGroup()
+    end)
+end)
+
 -- ─── Surcharge hasPlayerGotGroup ─────────────────────────────────────────────
 
 ---@diagnostic disable-next-line: duplicate-set-field
@@ -89,7 +97,7 @@ function utils.hasPlayerGotGroup(filter)
         return playerJob == filter
 
     elseif _type == 'table' then
-        -- FIX: table.type est une extension ox_lib non garantie.
+        -- FIX: table.type est une extension kt_lib non garantie.
         -- Détection manuelle : si une clé non-numérique existe → hash map.
         local isHash = false
         for k in pairs(filter) do
